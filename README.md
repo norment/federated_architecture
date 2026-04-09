@@ -2,6 +2,12 @@
 
 NVFLARE connectors and other federated infrastructure
 
+# Relevant google docs and spreadsheets
+
+* [Federated analysis notes](https://docs.google.com/document/d/1GXTNEM4xV8B8EXIqsBx1SABcf-_82UnD5OT2Bu1KVKY/edit?tab=t.0)
+* [Federated analysis studies](https://docs.google.com/spreadsheets/d/1vUDLtJvQESbyEKG9y48WJQ8VzD6K-hYIJnLNc8Wauqs/edit?gid=0#gid=0) spreadsheets
+* [Federated analysis use-cases](https://docs.google.com/spreadsheets/d/1vUDLtJvQESbyEKG9y48WJQ8VzD6K-hYIJnLNc8Wauqs/edit?gid=968194630#gid=968194630) - same spreadsheet as above, but second tab
+
 # NVFlare server
 
 * Oslo: NREC
