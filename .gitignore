@@ -1,0 +1,3 @@
+external/
+.codex
+**/__pycache__/**

@@ -1,6 +1,18 @@
 # Tutorial 3: Wrapper Clients For TRE Sites
 
-Use this when a TRE cannot run an NVFlare-native client that connects directly to the server, but the TRE exposes an API or job interface that you can drive from outside.
+## Goal
+
+Use the same checked-in `hello_regression` example as tutorials 1 and 2, but treat the client-side subprocess boundary as the TRE wrapper boundary.
+
+## Shared Example
+
+This tutorial uses:
+
+- [examples/hello_regression/client.py](../../examples/hello_regression/client.py)
+- [examples/hello_regression/site_runner.py](../../examples/hello_regression/site_runner.py)
+- [examples/hello_regression/job.py](../../examples/hello_regression/job.py)
+
+The important point is that `client.py` does not compute the local statistics itself. It shells out to `site_runner.py`. For a real TRE wrapper, replace that subprocess call with TSD, DX, or another site API call.
 
 ## Topology
 
@@ -8,72 +20,60 @@ Use this when a TRE cannot run an NVFlare-native client that connects directly t
 - NVFlare wrapper client on a reachable host
 - wrapper client calls the TRE-specific API
 - TRE runs the local analysis internally
-- wrapper client collects the agreed outputs and sends them back to the NVFlare server
+- wrapper client downloads summary statistics and sends them back to the NVFlare server
 
 ## Prerequisites
 
 - complete [Prerequisites](../prerequisites.md)
-- create the NVFlare venv on the server host
-- create the NVFlare venv on the wrapper-client host
+- create `~/venvs/nvflare` on the server host
+- create `~/venvs/nvflare` on the wrapper-client host
 - make sure the wrapper host can reach the NVFlare server
-- activate the NVFlare venv in every shell that runs the server or wrapper client
 - install the TRE-specific dependencies described in [TSD](../sites/tsd.md) or [UK Biobank RAP / DNAnexus](../sites/ukb-rap.md)
 
-## The Wrapper Contract
+## Local Development Run
 
-From NVFlare's point of view, the wrapper still looks like a normal client:
+Before wiring in a real TRE API, run the shared example locally:
 
-1. receive task from server
-2. trigger site-local analysis through the TRE API
+```bash
+source ~/venvs/nvflare/bin/activate
+python examples/hello_regression/job.py --env sim --n_clients 2
+```
+
+Run that from the repository root. It proves the server aggregation and the subprocess-based client boundary work.
+
+## Wrapper Contract
+
+Keep the same server-side aggregation in [examples/hello_regression/job.py](../../examples/hello_regression/job.py). In the client, replace the local subprocess with:
+
+1. upload code or parameters into the TRE
+2. submit the TRE-side job
 3. wait for completion
-4. download or collect result files
-5. send agreed outputs back to the server
+4. download the JSON summary statistics
+5. send those summary statistics back to NVFlare
 
-This is often the right pattern for secure platforms because the direct NVFlare socket stays outside the TRE boundary.
+The return payload should stay the same as the local example:
 
-## TSD Pattern
+- `site_name`
+- `n`
+- `x_tx`
+- `x_ty`
+- `y_ty`
 
-For TSD, the useful sequence is:
+## Site-Specific References
 
-1. upload pipeline bundle
-2. upload generated job script
-3. submit job through the TSD HPC API
-4. wait for job completion
-5. download results
+- TSD flow: [TSD](../sites/tsd.md)
+- UKB RAP / DX flow: [UK Biobank RAP / DNAnexus](../sites/ukb-rap.md)
 
-This repo includes tracked notes in [TSD site guide](../sites/tsd.md). The reviewed reference flow was adapted from the TSD HPC API example.
+## What Stays Shared Across Sites
 
-## UKB RAP / DX Pattern
+- regression math in `examples/hello_regression/common.py`
+- server aggregation in `examples/hello_regression/job.py`
+- JSON payload format returned by the client
 
-For UKB RAP / DNAnexus, the useful sequence is:
+## What Changes Per TRE
 
-1. prepare container or analysis package
-2. launch analysis with `dx run` or Swiss Army Knife
-3. wait for job completion
-4. upload or collect output
-5. return agreed outputs to the NVFlare server
-
-Tracked notes are in [UKB RAP site guide](../sites/ukb-rap.md) and the existing [ukb](../../ukb) folder.
-
-## What To Keep Site-Specific
-
-- auth and 2FA
+- authentication
 - upload and download paths
-- scheduler or API parameters
-- permitted output files
-- retry logic for transient API failures
-
-## What To Keep Common Across Sites
-
-- job lifecycle inside the wrapper client
-- serialization of outputs back to NVFlare
-- logging and error handling
-- result validation
-
-## Recommended Next Step
-
-Keep the wrapper docs short and implementation-specific:
-
-- one short page per TRE
-- one small wrapper launcher per TRE
-- same high-level lifecycle everywhere
+- job submission command
+- polling method
+- output retrieval

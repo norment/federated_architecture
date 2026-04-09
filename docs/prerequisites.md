@@ -17,7 +17,7 @@ Create one venv on each machine that will run NVFlare:
 python3 -m venv ~/venvs/nvflare
 source ~/venvs/nvflare/bin/activate
 python -m pip install --upgrade pip
-pip install nvflare
+pip install nvflare numpy
 nvflare --version
 ```
 
@@ -61,7 +61,11 @@ You may also need site-specific tools such as `tacl` or `dx`.
 
 ### Native NVFlare Tutorials
 
-Tutorials 1 and 2 only require NVFlare plus standard shell tools.
+Tutorials 1 and 2 use the checked-in `examples/hello_regression` code and require:
+
+- `nvflare`
+- `numpy`
+- standard shell tools
 
 ### Wrapper Tutorials
 

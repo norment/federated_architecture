@@ -1,37 +1,34 @@
 # Tutorial 2: Dedicated Server + Native Clients
 
-Use this when each participating site can run an NVFlare client that opens an outbound connection to the server.
+## Goal
 
-This is the pattern to use for setups such as:
+Run the same checked-in `hello_regression` example as tutorial 1, but against a real NVFlare server and real NVFlare clients.
 
-- server on NREC
-- client on Snellius
-- client on another reachable workstation or TRE host
-- HuntCloud if firewall exceptions allow the outbound connection
+## Shared Example
+
+This tutorial uses:
+
+- [examples/hello_regression/client.py](../../examples/hello_regression/client.py)
+- [examples/hello_regression/site_runner.py](../../examples/hello_regression/site_runner.py)
+- [examples/hello_regression/job.py](../../examples/hello_regression/job.py)
+
+The client synthesizes site-local data from the site name. No data files need to be copied to the clients.
 
 ## Topology
 
 - one dedicated server host
 - one client per participating site
-- one admin console
+- one admin startup kit
 - one provisioning run shared across all participants
 
 ## Prerequisites
 
 - complete [Prerequisites](../prerequisites.md)
-- create the NVFlare venv on the server host
-- create the NVFlare venv on every client host
-- choose one host for the admin console
+- create `~/venvs/nvflare` on the server host
+- create `~/venvs/nvflare` on every client host
+- choose one machine that has the admin startup kit
 - confirm each client host can open an outbound connection to the server FL port
 - confirm the admin host can reach the server admin port
-- activate the NVFlare venv in every shell used below
-
-## Key Rules
-
-- Use the server FQDN or stable IP in `project.yml`
-- Pick explicit ports for FL traffic and admin traffic
-- All participants must use kits from the same provisioning run
-- Clients must be able to reach the server outbound on the chosen FL port
 
 ## Minimal Provisioning Pattern
 
@@ -84,28 +81,65 @@ builders:
 Provision:
 
 ```bash
+source ~/venvs/nvflare/bin/activate
 nvflare provision -p project.yml
 ```
 
-Copy each client kit to its site, then start:
+## Start Server And Clients
 
-- server: `./start.sh`
-- each client: `./start.sh`
-- admin console: `./fl_admin.sh`
+Server:
 
-## Native-Site Checklist
+```bash
+source ~/venvs/nvflare/bin/activate
+cd ~/nvflare_two_sites/workspace/native_two_sites/prod_00/${SERVER_NAME}/startup
+./start.sh
+```
 
-- outbound connection from client host to `${SERVER_NAME}:${FL_PORT}`
-- admin access to `${SERVER_NAME}:${ADMIN_PORT}`
-- correct hostname in certificate and `project.yml`
-- same `prod_00` kit set everywhere
+Each client:
+
+```bash
+source ~/venvs/nvflare/bin/activate
+cd /path/to/<site-name>/startup
+./start.sh
+```
+
+Optional admin status check:
+
+```bash
+source ~/venvs/nvflare/bin/activate
+cd /path/to/admin@demo.org/startup
+./fl_admin.sh
+```
+
+Inside the admin console:
+
+```text
+check_status server
+check_status client
+```
+
+## Run The Shared Example
+
+From the repository root on a machine that has the admin startup kit:
+
+```bash
+source ~/venvs/nvflare/bin/activate
+python examples/hello_regression/job.py \
+  --env prod \
+  --n_clients 2 \
+  --startup_kit /path/to/admin@demo.org \
+  --username admin@demo.org
+```
+
+That submits the same custom client and custom server code used in tutorial 1, but against real server and client processes.
 
 ## Common Issues
 
-- connection immediately opens then closes: usually hostname or cert mismatch
-- client cannot connect: usually blocked outbound port
-- one site uses older kits: usually mixed provisioning runs
+- connection immediately opens then closes: hostname or certificate mismatch
+- client cannot connect: blocked outbound FL port
+- one site uses older kits: mixed provisioning runs
+- `hello_regression` prod run fails before submission: `--startup_kit` points to the wrong directory
 
-## When To Stop Using This Pattern
+## Next Step
 
-If a site will not allow the outbound NVFlare connection from inside the TRE, switch to the wrapper pattern instead of fighting the platform.
+If a site cannot make the outbound NVFlare connection, keep the same `hello_regression` server-side code and move to tutorial 3.

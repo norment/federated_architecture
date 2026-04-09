@@ -12,7 +12,15 @@ This repo is meant to help researchers get from "I want to run a federated analy
 
 ## What This Repo Is Not
 
-This repo is not aiming at a permanent 24/7 federated service where users submit jobs into cour
+This repo is not aiming at a permanent 24/7 federated service where users submit jobs into always-on server and client processes.
+
+The expected operating model is:
+
+- one analyst or coordinating site starts the NVFlare server
+- each participating site starts its own client
+- the job is run for that analysis session
+- the full setup is shut down when the analysis is done
+
 ## NVFlare In One Minute
 
 - NVFlare uses a client/server architecture
@@ -34,6 +42,7 @@ This outbound client-to-server connection is the main design constraint for TRE 
 
 - [Prerequisites](docs/prerequisites.md)
 - [NVFlare basics for TRE researchers](docs/nvflare-basics.md)
+- [Shared runnable example: hello_regression](examples/hello_regression/README.md)
 - [Tutorial 1: Single-host hello world](docs/tutorials/01-localhost.md)
 - [Tutorial 2: Dedicated server + native clients](docs/tutorials/02-dedicated-server-native-clients.md)
 - [Tutorial 3: Wrapper clients for TRE sites](docs/tutorials/03-wrapper-clients.md)
@@ -49,7 +58,9 @@ This outbound client-to-server connection is the main design constraint for TRE 
 ## Repo Layout
 
 - `docs/` tracked documentation and deployment notes copied/adapted from reviewed examples
+- `examples/` checked-in runnable examples used by the tutorials
 - `ukb/` tracked UKB RAP / DX command notes
+- `external/` review-only material that is not expected to be committed
 
 ## Relevant Google Docs And Spreadsheets
 

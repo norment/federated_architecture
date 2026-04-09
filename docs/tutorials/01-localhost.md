@@ -1,21 +1,36 @@
 # Tutorial 1: Single-Host Hello World
 
-Use this first. It proves that your local NVFlare install, provisioning flow, startup kits, and admin workflow all work before you involve real sites.
-
 ## Goal
 
-Run one server, two clients, and one admin on a single machine.
+Run the checked-in `hello_regression` example entirely on one machine.
+
+The example synthesizes site-local data inside the client code, so no CSV or other input files need to be copied anywhere.
+
+## Shared Example
+
+This tutorial uses:
+
+- [examples/hello_regression/client.py](../../examples/hello_regression/client.py)
+- [examples/hello_regression/site_runner.py](../../examples/hello_regression/site_runner.py)
+- [examples/hello_regression/job.py](../../examples/hello_regression/job.py)
+
+Fastest first run:
+
+```bash
+source ~/venvs/nvflare/bin/activate
+python examples/hello_regression/job.py --env sim --n_clients 2
+```
+
+Run that from the repository root. The manual provisioning below is only to inspect the server/client/admin mechanics.
 
 ## Prerequisites
 
 - complete [Prerequisites](../prerequisites.md)
 - one machine with at least four shell sessions
 - `hostname -f` should return a usable hostname on the local machine
-- activate the NVFlare venv in every shell used in this tutorial
+- activate `~/venvs/nvflare` in every shell used in this tutorial
 
 ## Create A Minimal Project
-
-Choose a hostname that resolves on your machine:
 
 ```bash
 export SERVER_NAME="$(hostname -f)"
@@ -69,28 +84,34 @@ nvflare provision -p project.yml
 
 ## Start Components
 
+Server shell:
+
 ```bash
+source ~/venvs/nvflare/bin/activate
 cd ~/nvflare_local_demo/workspace/local_demo/prod_00/${SERVER_NAME}/startup
 ./start.sh
 ```
 
-In another shell:
+Client `site-a` shell:
 
 ```bash
+source ~/venvs/nvflare/bin/activate
 cd ~/nvflare_local_demo/workspace/local_demo/prod_00/site-a/startup
 ./start.sh
 ```
 
-In a third shell:
+Client `site-b` shell:
 
 ```bash
+source ~/venvs/nvflare/bin/activate
 cd ~/nvflare_local_demo/workspace/local_demo/prod_00/site-b/startup
 ./start.sh
 ```
 
-In a fourth shell:
+Admin shell:
 
 ```bash
+source ~/venvs/nvflare/bin/activate
 cd ~/nvflare_local_demo/workspace/local_demo/prod_00/admin\@demo.org/startup
 ./fl_admin.sh
 ```
@@ -102,31 +123,4 @@ check_status server
 check_status client
 ```
 
-## Submit A Tiny Job
-
-Outside the admin console:
-
-```bash
-nvflare job create -w sag_cross_np -j ~/nvflare_local_demo/my_first_job
-```
-
-Back in the admin console:
-
-```text
-submit_job /home/$USER/nvflare_local_demo/my_first_job
-list_jobs
-download_job <job_id>
-```
-
-## Stop Everything
-
-Inside the admin console:
-
-```text
-shutdown client site-a
-shutdown client site-b
-shutdown server
-bye
-```
-
-If this works, move on to a real server plus remote clients.
+If the infrastructure looks correct, move on to tutorial 2 and run the same `hello_regression` example against real server and client processes.
