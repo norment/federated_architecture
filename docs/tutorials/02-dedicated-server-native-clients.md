@@ -1,8 +1,13 @@
-# Tutorial 2: Dedicated Server + Native Clients
+# Tutorial 2: Public FL Endpoint + Native Clients
 
 ## Goal
 
 Run the same checked-in `hello_regression` example as tutorial 1, but against a real NVFlare server and real NVFlare clients.
+
+For tutorial 2, the requirement is a publicly reachable FL endpoint. The server process can run on:
+
+- a dedicated public machine
+- or your local machine behind stable TCP forwarding such as `ngrok tcp 8002`
 
 ## Shared Example
 
@@ -16,7 +21,8 @@ The client synthesizes site-local data from the site name. No data files need to
 
 ## Topology
 
-- one dedicated server host
+- one public FL endpoint for the server
+- one machine that runs the server process
 - one client per participating site
 - one admin startup kit
 - one provisioning run shared across all participants
@@ -24,90 +30,78 @@ The client synthesizes site-local data from the site name. No data files need to
 ## Prerequisites
 
 - complete [Prerequisites](../prerequisites.md)
-- create `~/venvs/nvflare` on the server host
+- choose one public FL endpoint option from [tutorial 2 server endpoint options](02-server-endpoint-options.md)
+- create `~/venvs/nvflare` on the machine that will run the server process
 - create `~/venvs/nvflare` on every client host
 - choose one machine that has the admin startup kit
-- confirm each client host can open an outbound connection to the server FL port
-- confirm the admin host can reach the server admin port
+- confirm each client host can open an outbound connection to the public FL endpoint
+- confirm the admin host can reach the server admin port if admin will not run locally on the server machine
 
-## Minimal Provisioning Pattern
+## Copy The Checked-In Template
 
-On the server host:
+From the repository root on the machine that will run the server process:
 
 ```bash
-export SERVER_NAME="$(hostname -f)"
-export FL_PORT=29002
-export ADMIN_PORT=29003
 mkdir -p ~/nvflare_two_sites
+cp docs/tutorials/assets/02-dedicated-server-native-clients/.env.template ~/nvflare_two_sites/.env
+cp docs/tutorials/assets/02-dedicated-server-native-clients/project.yml ~/nvflare_two_sites/project.yml
 cd ~/nvflare_two_sites
 ```
 
-Create `project.yml`:
+Edit `.env` and set at least:
 
-```yaml
-api_version: 3
-name: native_two_sites
-participants:
-  - name: ${SERVER_NAME}
-    type: server
-    org: demo
-    fed_learn_port: ${FL_PORT}
-    admin_port: ${ADMIN_PORT}
-  - name: site-a
-    type: client
-    org: demo
-  - name: site-b
-    type: client
-    org: demo
-  - name: admin@demo.org
-    type: admin
-    org: demo
-    role: project_admin
-builders:
-  - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
-    args: { template_file: master_template.yml }
-  - path: nvflare.lighter.impl.template.TemplateBuilder
-  - path: nvflare.lighter.impl.static_file.StaticFileBuilder
-    args:
-      overseer_agent:
-        path: nvflare.ha.dummy_overseer_agent.DummyOverseerAgent
-        overseer_exists: false
-        args:
-          sp_end_point: ${SERVER_NAME}:${FL_PORT}:${ADMIN_PORT}
-  - path: nvflare.lighter.impl.cert.CertBuilder
-  - path: nvflare.lighter.impl.signature.SignatureBuilder
-```
+- `SERVER_NAME` to the public hostname or IP that clients will actually dial
+- `LOCAL_FL_PORT` to the port the server process listens on locally, usually `8002`
+- `PUBLIC_FL_PORT` to the public FL port that clients will actually dial
+- `ADMIN_PORT` only if another service already uses `8003` on the server machine
+- `ADMIN_HOST`, usually `localhost`
+- client and admin names only if you want different labels
 
-Provision:
+The checked-in files are:
+
+- [docs/tutorials/assets/02-dedicated-server-native-clients/.env.template](assets/02-dedicated-server-native-clients/.env.template)
+- [docs/tutorials/assets/02-dedicated-server-native-clients/project.yml](assets/02-dedicated-server-native-clients/project.yml)
+- [scripts/provision_from_env.sh](../../scripts/provision_from_env.sh)
+- [tutorial 2 server endpoint options](02-server-endpoint-options.md)
+
+The checked-in `project.yml` is a template. Use the helper script below rather than passing it directly to `nvflare provision`.
+
+## Provision
+
+From the repository root, activate your Python environment, then provision with the helper script:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-nvflare provision -p project.yml
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+./scripts/provision_from_env.sh ~/nvflare_two_sites
 ```
 
 ## Start Server And Clients
 
-Server:
+Server process host:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd ~/nvflare_two_sites/workspace/native_two_sites/prod_00/${SERVER_NAME}/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd ~/nvflare_two_sites
+set -a
+source .env
+set +a
+cd workspace/${PROJECT_NAME}/prod_00/${SERVER_NAME}/startup
 ./start.sh
 ```
 
 Each client:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd /path/to/<site-name>/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd /path/to/copied/client-kit/startup
 ./start.sh
 ```
 
 Optional admin status check:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd /path/to/admin@demo.org/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd /path/to/copied/admin-kit/startup
 ./fl_admin.sh
 ```
 
@@ -123,20 +117,30 @@ check_status client
 From the repository root on a machine that has the admin startup kit:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
 python examples/hello_regression/job.py \
   --env prod \
   --n_clients 2 \
-  --startup_kit /path/to/admin@demo.org \
-  --username admin@demo.org
+  --startup_kit /path/to/copied/admin-kit \
+  --username <admin-name-from-.env>
 ```
 
 That submits the same custom client and custom server code used in tutorial 1, but against real server and client processes.
 
+The client and admin startup kits come from `~/nvflare_two_sites/workspace/${PROJECT_NAME}/prod_00/` on the server host after provisioning.
+
+If you keep the default template values, the admin name is `admin@demo.org`.
+
+You do not put SSH passwords, site account credentials, or 2FA material into `.env` or `project.yml`. Those are used only when you log in to hosts and copy the startup kits.
+
+The startup kits themselves contain NVFlare certificates and private keys, so handle them as sensitive deployment files.
+
 ## Common Issues
 
 - connection immediately opens then closes: hostname or certificate mismatch
-- client cannot connect: blocked outbound FL port
+- client cannot connect: public FL endpoint is not actually reachable from that client site
+- using local machine plus port forwarding: `PUBLIC_FL_PORT` still points to the local server port instead of the public forwarded port
+- multiple NVFlare servers on one host: assign a different free local admin port or local FL port as needed before forwarding
 - one site uses older kits: mixed provisioning runs
 - `hello_regression` prod run fails before submission: `--startup_kit` points to the wrong directory
 

@@ -17,7 +17,7 @@ This tutorial uses:
 Fastest first run:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
 python examples/hello_regression/job.py --env sim --n_clients 2
 ```
 
@@ -30,56 +30,36 @@ Run that from the repository root. The manual provisioning below is only to insp
 - `hostname -f` should return a usable hostname on the local machine
 - activate `~/venvs/nvflare` in every shell used in this tutorial
 
-## Create A Minimal Project
+## Copy The Checked-In Template
 
 ```bash
-export SERVER_NAME="$(hostname -f)"
-export FL_PORT=29002
-export ADMIN_PORT=29003
 mkdir -p ~/nvflare_local_demo
+cp docs/tutorials/assets/01-localhost/.env.template ~/nvflare_local_demo/.env
+cp docs/tutorials/assets/01-localhost/project.yml ~/nvflare_local_demo/project.yml
 cd ~/nvflare_local_demo
 ```
 
-Create `project.yml`:
+Edit `.env` and set at least:
 
-```yaml
-api_version: 3
-name: local_demo
-participants:
-  - name: ${SERVER_NAME}
-    type: server
-    org: demo
-    fed_learn_port: ${FL_PORT}
-    admin_port: ${ADMIN_PORT}
-  - name: site-a
-    type: client
-    org: demo
-  - name: site-b
-    type: client
-    org: demo
-  - name: admin@demo.org
-    type: admin
-    org: demo
-    role: project_admin
-builders:
-  - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
-    args: { template_file: master_template.yml }
-  - path: nvflare.lighter.impl.template.TemplateBuilder
-  - path: nvflare.lighter.impl.static_file.StaticFileBuilder
-    args:
-      overseer_agent:
-        path: nvflare.ha.dummy_overseer_agent.DummyOverseerAgent
-        overseer_exists: false
-        args:
-          sp_end_point: ${SERVER_NAME}:${FL_PORT}:${ADMIN_PORT}
-  - path: nvflare.lighter.impl.cert.CertBuilder
-  - path: nvflare.lighter.impl.signature.SignatureBuilder
-```
+- `SERVER_NAME`
+- `FL_PORT` and `ADMIN_PORT` only if `8002` or `8003` are already in use on this machine
+- participant names only if you want different labels than `site-a`, `site-b`, and `admin@demo.org`
 
-Provision:
+The checked-in files are:
+
+- [docs/tutorials/assets/01-localhost/.env.template](assets/01-localhost/.env.template)
+- [docs/tutorials/assets/01-localhost/project.yml](assets/01-localhost/project.yml)
+- [scripts/provision_from_env.sh](../../scripts/provision_from_env.sh)
+
+The checked-in `project.yml` is a template. Use the helper script below rather than passing it directly to `nvflare provision`.
+
+## Provision
+
+From the repository root, activate your Python environment, then provision with the helper script:
 
 ```bash
-nvflare provision -p project.yml
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+./scripts/provision_from_env.sh ~/nvflare_local_demo
 ```
 
 ## Start Components
@@ -87,32 +67,48 @@ nvflare provision -p project.yml
 Server shell:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd ~/nvflare_local_demo/workspace/local_demo/prod_00/${SERVER_NAME}/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd ~/nvflare_local_demo
+set -a
+source .env
+set +a
+cd workspace/${PROJECT_NAME}/prod_00/${SERVER_NAME}/startup
 ./start.sh
 ```
 
 Client `site-a` shell:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd ~/nvflare_local_demo/workspace/local_demo/prod_00/site-a/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd ~/nvflare_local_demo
+set -a
+source .env
+set +a
+cd workspace/${PROJECT_NAME}/prod_00/${CLIENT_A_NAME}/startup
 ./start.sh
 ```
 
 Client `site-b` shell:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd ~/nvflare_local_demo/workspace/local_demo/prod_00/site-b/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd ~/nvflare_local_demo
+set -a
+source .env
+set +a
+cd workspace/${PROJECT_NAME}/prod_00/${CLIENT_B_NAME}/startup
 ./start.sh
 ```
 
 Admin shell:
 
 ```bash
-source ~/venvs/nvflare/bin/activate
-cd ~/nvflare_local_demo/workspace/local_demo/prod_00/admin\@demo.org/startup
+source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+cd ~/nvflare_local_demo
+set -a
+source .env
+set +a
+cd workspace/${PROJECT_NAME}/prod_00/${ADMIN_NAME}/startup
 ./fl_admin.sh
 ```
 

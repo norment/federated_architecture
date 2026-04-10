@@ -24,6 +24,14 @@ If no, use a wrapper pattern:
 - let that client call the TRE's own API, batch system, or job runner
 - return only the agreed outputs back into the federation
 
+For these tutorials:
+
+- clients need the FL server port
+- clients do not need the admin port
+- there is no separate overseer port to open
+
+If you later need HA or overseer-based server discovery, see [advanced NVFlare notes](advanced-nvflare.md).
+
 ## Two Deployment Patterns
 
 ### NVFlare-native
@@ -36,7 +44,7 @@ Use this when the site can:
 
 Examples in this repo:
 
-- Snellius client with server on NREC
+- Snellius as a native client site
 - HuntCloud if firewall exception is available
 
 ### Wrapper client

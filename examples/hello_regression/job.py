@@ -6,6 +6,7 @@ from pathlib import Path
 
 from common import make_result_summary
 from nvflare.app_common.np.recipes import NumpyFedAvgRecipe
+from nvflare.app_common.np.constants import NPConstants
 from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
 from nvflare.apis.fl_constant import FLContextKey
 from nvflare.apis.fl_context import FLContext
@@ -68,12 +69,15 @@ class RegressionAggregator(ModelAggregator):
 
         return FLModel(
             params={
-                "estimated_beta": summary["estimated_beta"],
+                NPConstants.NUMPY_KEY: summary["estimated_beta"],
+            },
+            params_type=self.received_params_type,
+            meta={
+                "summary": summary,
+                "output_folder": str(output_dir) if output_dir else None,
                 "standard_error": summary["standard_error"],
                 "total_samples": summary["total_samples"],
             },
-            params_type=self.received_params_type,
-            meta={"summary": summary, "output_folder": str(output_dir) if output_dir else None},
         )
 
     def reset_stats(self):

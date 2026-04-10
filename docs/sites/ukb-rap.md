@@ -4,7 +4,9 @@
 
 Use a wrapper client.
 
-Keep the NVFlare socket outside RAP. The wrapper should call `dx`, wait for job completion, collect agreed outputs, and send only those outputs back into the federated run.
+Keep the NVFlare socket outside RAP. In tutorial 3, the intended pattern is to run the wrapper on the same non-TRE host as the NVFlare server.
+
+The wrapper should call `dx`, wait for job completion, collect agreed outputs, and send only those outputs back into the federated run.
 
 ## Existing Tracked Notes
 
@@ -18,6 +20,12 @@ Keep the NVFlare socket outside RAP. The wrapper should call `dx`, wait for job 
 3. Monitor the RAP job.
 4. Collect result files when complete.
 5. Return agreed outputs to the federated run.
+
+The same host can run:
+
+- the NVFlare server
+- the RAP wrapper client
+- a second wrapper client for another TRE such as TSD
 
 ## Required Per-Use-Case Settings
 

@@ -1,0 +1,37 @@
+# Render this template with envsubst after loading .env.
+api_version: 3
+name: ${PROJECT_NAME}
+participants:
+  - name: ${SERVER_NAME}
+    type: server
+    org: ${ORG_NAME}
+    fed_learn_port: ${LOCAL_FL_PORT}
+    admin_port: ${ADMIN_PORT}
+  - name: ${CLIENT_A_NAME}
+    type: client
+    org: ${ORG_NAME}
+    connect_to:
+      name: ${SERVER_NAME}
+      host: ${SERVER_NAME}
+      port: ${PUBLIC_FL_PORT}
+  - name: ${CLIENT_B_NAME}
+    type: client
+    org: ${ORG_NAME}
+    connect_to:
+      name: ${SERVER_NAME}
+      host: ${SERVER_NAME}
+      port: ${PUBLIC_FL_PORT}
+  - name: ${ADMIN_NAME}
+    type: admin
+    org: ${ORG_NAME}
+    role: project_admin
+    connect_to:
+      name: ${SERVER_NAME}
+      host: ${ADMIN_HOST}
+      port: ${ADMIN_PORT}
+builders:
+  - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
+    args: { template_file: master_template.yml }
+  - path: nvflare.lighter.impl.static_file.StaticFileBuilder
+  - path: nvflare.lighter.impl.cert.CertBuilder
+  - path: nvflare.lighter.impl.signature.SignatureBuilder

@@ -4,7 +4,9 @@
 
 Use a wrapper client.
 
-Run the NVFlare client on a reachable machine outside TSD. That client should call the TSD HPC API, wait for completion, download the agreed outputs, and return only those outputs to the federated run.
+Run the NVFlare client on a reachable machine outside TSD. In tutorial 3, the intended pattern is to run that wrapper client on the same non-TRE host as the NVFlare server.
+
+That wrapper client should call the TSD HPC API, wait for completion, download the agreed outputs, and return only those outputs to the federated run.
 
 ## References
 
@@ -14,9 +16,11 @@ Run the NVFlare client on a reachable machine outside TSD. That client should ca
 ## Prerequisites
 
 - `tacl` installed and registered for the TSD project
-- VPN or whitelisted IP when required
 - project username
 - password and OTP available when tokens expire
+- the external host that runs the wrapper must be whitelisted for the TSD project
+- a TSD project admin should request that whitelisting by contacting `tsd-drift@usit.uio.no`
+- VPN when required by the project setup
 
 ## Wrapper Lifecycle
 
@@ -31,6 +35,7 @@ Run the NVFlare client on a reachable machine outside TSD. That client should ca
 
 - TSD project id
 - TSD username
+- host that is whitelisted to call the TSD side
 - import directory
 - export directory
 - working directory inside TSD
