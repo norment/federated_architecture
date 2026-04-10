@@ -4,9 +4,9 @@
 
 Use the same checked-in `hello_regression` example as tutorials 1 and 2, but run the NVFlare server and all wrapper clients on the same non-TRE host and let each client delegate site work through its site API.
 
-Suggested mode: `sim` for wrapper development and validation.
+Mode: `poc`.
 
-Tutorial 3 is mainly about exercising the wrapper logic itself. Start with `--env sim` when you want to validate the TSD or DX integration. Use the local `prod` setup in this tutorial only when you specifically want to inspect the full local server/client/admin NVFlare topology around those wrappers.
+Tutorial 3 uses NVFlare `poc` mode to provision a local multi-process workspace with separate server, client, and admin shells on one host. The job itself is still submitted with `--env prod`, because it talks to live local NVFlare processes rather than the simulator.
 
 The implementation supports running any subset of the configured wrapper clients, but this tutorial walks through the full three-site setup.
 
@@ -55,19 +55,6 @@ Use these setup sections directly:
 
 ## Happy Path
 
-Recommended first check for tutorial 3 is a `sim` run that still exercises the wrapper code path. The helper script now generates `sim-site-map.json`, so `submit` can route simulated clients to the right wrapper backend and site config.
-
-For example, after priming and initializing the workspace, run:
-
-```bash
-source ~/venvs/nvflare/bin/activate
-./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --n_clients 3
-```
-
-That default `submit` path uses `--env sim`.
-
-If you want to inspect the full local NVFlare topology with real server, client, and admin processes, use the same helper with `--env prod` and start the local processes in separate terminals as shown below.
-
 From the repository root:
 
 ```bash
@@ -86,14 +73,13 @@ source ~/venvs/nvflare/bin/activate
 That one `init` command:
 
 - copies the checked-in tutorial assets
-- provisions the local NVFlare workspace
+- renders `project.rendered.yml`
+- prepares a local NVFlare POC workspace under `~/nvflare_wrapper_demo/poc/`
 - creates `~/nvflare_wrapper_demo/tsd-configs/p33.yml`
 - creates `~/nvflare_wrapper_demo/tsd-configs/p697.yml`
 - creates `~/nvflare_wrapper_demo/dx-configs/ukb-rap.yml`
 
-Optional `prod` walkthrough for the same three-site setup:
-
-Open five terminals on the same host:
+Then open five terminals on the same host:
 
 Server:
 
@@ -134,19 +120,19 @@ Submit the job:
 
 ```bash
 source ~/venvs/nvflare/bin/activate
-./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --env prod --n_clients 3
+./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo
 ```
 
 The downloaded result bundle ends up under:
 
 ```bash
-~/nvflare_wrapper_demo/workspace/wrapper_three_sites/prod_00/admin@demo.org/transfer/<job-id>/
+~/nvflare_wrapper_demo/poc/wrapper_three_sites/prod_00/admin@demo.org/transfer/<job-id>/
 ```
 
 The main output for this example is:
 
 ```bash
-~/nvflare_wrapper_demo/workspace/wrapper_three_sites/prod_00/admin@demo.org/transfer/<job-id>/workspace/server_results/hello_regression_summary.json
+~/nvflare_wrapper_demo/poc/wrapper_three_sites/prod_00/admin@demo.org/transfer/<job-id>/workspace/server_results/hello_regression_summary.json
 ```
 
 ## Fixed Tutorial Defaults
@@ -169,10 +155,11 @@ The checked-in files used by `init` are:
 ## Notes
 
 - `init` derives `project`, `slurm_account`, and standard TSD paths from the usernames you pass.
-- `init` also writes `sim-site-map.json`, which maps `site-1`, `site-2`, and `site-3` to the configured wrapper backends for tutorial-3 `sim` runs.
-- `start-client-a` and `start-client-b` export `HELLO_REGRESSION_EXECUTOR=tsd` automatically.
+- `init` isolates NVFlare's POC config under the tutorial workdir so it does not need to reuse your global `~/.nvflare` state.
+- `start-client-a` and `start-client-b` export `HELLO_REGRESSION_EXECUTOR=tsd` and the matching `HELLO_REGRESSION_TSD_CONFIG` path automatically.
 - `init` writes the DX project you pass into `dx-configs/ukb-rap.yml`.
-- `start-client-c` exports `HELLO_REGRESSION_EXECUTOR=dx` automatically.
+- `start-client-c` exports `HELLO_REGRESSION_EXECUTOR=dx` and `HELLO_REGRESSION_DX_CONFIG` automatically.
+- `submit` uses `--env prod` with the admin startup kit from the prepared POC workspace.
 - TSD flow: [TSD](../sites/tsd.md)
 - UKB RAP / DNAnexus flow: [UK Biobank RAP / DNAnexus](../sites/ukb-rap.md)
 
@@ -184,7 +171,7 @@ General rule:
 
 - start only the client processes you want to use
 - pass only the site options you want to `tutorial3_local.sh init`
-- submit with `--n_clients` set to the number of active wrapper clients
+- `submit` derives the exact client list from the generated site config files and passes those names to `job.py --clients`
 
 Examples:
 
@@ -194,7 +181,7 @@ Examples:
 ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo_dx \
   --dx-project project-REDACTED1234567890EXAMPLE
 
-./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_dx --n_clients 1
+./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_dx
 ```
 
 - One TSD site only:
@@ -203,7 +190,7 @@ Examples:
 ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo_p33 \
   --p33-user p33-yourusername
 
-./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_p33 --n_clients 1
+./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_p33
 ```
 
 - Two TSD sites only:
@@ -213,5 +200,5 @@ Examples:
   --p33-user p33-yourusername \
   --p697-user p697-yourusername
 
-./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_tsd --n_clients 2
+./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_tsd
 ```

@@ -22,8 +22,7 @@ Examples:
   ./scripts/tutorial3_local.sh start-client-b ~/nvflare_wrapper_demo
   ./scripts/tutorial3_local.sh start-client-c ~/nvflare_wrapper_demo
   ./scripts/tutorial3_local.sh start-admin ~/nvflare_wrapper_demo
-  ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --n_clients 3
-  ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --env prod --n_clients 3
+  ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo
 EOF
   exit 1
 }
@@ -38,12 +37,26 @@ shift 2
 
 startup_dir() {
   local participant_name="$1"
-  printf '%s\n' "${workdir}/workspace/${PROJECT_NAME}/prod_00/${participant_name}/startup"
+  printf '%s\n' "${workdir}/poc/${PROJECT_NAME}/prod_00/${participant_name}/startup"
 }
 
 participant_dir() {
   local participant_name="$1"
-  printf '%s\n' "${workdir}/workspace/${PROJECT_NAME}/prod_00/${participant_name}"
+  printf '%s\n' "${workdir}/poc/${PROJECT_NAME}/prod_00/${participant_name}"
+}
+
+configured_clients() {
+  local clients=()
+  if [[ -f "${workdir}/tsd-configs/${WRAPPER_A_NAME}.yml" ]]; then
+    clients+=("${WRAPPER_A_NAME}")
+  fi
+  if [[ -f "${workdir}/tsd-configs/${WRAPPER_B_NAME}.yml" ]]; then
+    clients+=("${WRAPPER_B_NAME}")
+  fi
+  if [[ -f "${workdir}/dx-configs/${WRAPPER_C_NAME}.yml" ]]; then
+    clients+=("${WRAPPER_C_NAME}")
+  fi
+  printf '%s\n' "${clients[@]}"
 }
 
 detect_python() {
@@ -79,6 +92,19 @@ load_env() {
   # shellcheck disable=SC1090
   source "${env_file}"
   set +a
+}
+
+render_project() {
+  local rendered_project
+  rendered_project="${workdir}/project.rendered.yml"
+  (
+    cd "${workdir}"
+    set -a
+    source .env
+    set +a
+    envsubst < project.yml > project.rendered.yml
+  )
+  printf '%s\n' "${rendered_project}"
 }
 
 case "${command_name}" in
@@ -119,21 +145,23 @@ case "${command_name}" in
       usage
     fi
 
-    mkdir -p "${workdir}" "${workdir}/tsd-configs" "${workdir}/dx-configs"
+    mkdir -p "${workdir}" "${workdir}/tsd-configs" "${workdir}/dx-configs" "${workdir}/.home"
 
     if [[ "${force}" == "true" ]]; then
       cp "${repo_root}/docs/tutorials/assets/03-wrapper-clients/.env.template" "${workdir}/.env"
       cp "${repo_root}/docs/tutorials/assets/03-wrapper-clients/project.yml" "${workdir}/project.yml"
+      rm -rf "${workdir}/poc" "${workdir}/project.rendered.yml"
     else
-      if [[ -e "${workdir}/.env" || -e "${workdir}/project.yml" ]]; then
-        echo "Refusing to overwrite existing ${workdir}/.env or ${workdir}/project.yml without --force" >&2
+      if [[ -e "${workdir}/.env" || -e "${workdir}/project.yml" || -e "${workdir}/poc" ]]; then
+        echo "Refusing to overwrite existing ${workdir}/.env, ${workdir}/project.yml, or ${workdir}/poc without --force" >&2
         exit 1
       fi
       cp "${repo_root}/docs/tutorials/assets/03-wrapper-clients/.env.template" "${workdir}/.env"
       cp "${repo_root}/docs/tutorials/assets/03-wrapper-clients/project.yml" "${workdir}/project.yml"
     fi
 
-    bash "${repo_root}/scripts/provision_from_env.sh" "${workdir}"
+    rendered_project="$(render_project)"
+    HOME="${workdir}/.home" NVFLARE_POC_WORKSPACE="${workdir}/poc" nvflare poc prepare -i "${rendered_project}"
 
     python_bin="$(detect_python)"
     if [[ -n "${p33_user}" ]]; then
@@ -157,13 +185,6 @@ case "${command_name}" in
         --force
       printf '%s\n' "Generated ${workdir}/dx-configs/ukb-rap.yml"
     fi
-    "${python_bin}" "${repo_root}/scripts/make_wrapper_site_map.py" \
-      --output "${workdir}/sim-site-map.json" \
-      --p33-config "${workdir}/tsd-configs/p33.yml" \
-      --p697-config "${workdir}/tsd-configs/p697.yml" \
-      --dx-config "${workdir}/dx-configs/ukb-rap.yml"
-    printf '%s\n' "Generated ${workdir}/sim-site-map.json"
-
     printf '%s\n' "Initialized tutorial 3 workspace at ${workdir}"
     ;;
   start-server)
@@ -173,22 +194,22 @@ case "${command_name}" in
     ;;
   start-client-a)
     load_env
-    export HELLO_REGRESSION_EXECUTOR="${HELLO_REGRESSION_EXECUTOR:-tsd}"
-    export HELLO_REGRESSION_TSD_CONFIG_DIR="${HELLO_REGRESSION_TSD_CONFIG_DIR:-${workdir}/tsd-configs}"
+    export HELLO_REGRESSION_EXECUTOR="tsd"
+    export HELLO_REGRESSION_TSD_CONFIG="${workdir}/tsd-configs/${WRAPPER_A_NAME}.yml"
     cd "$(startup_dir "${WRAPPER_A_NAME}")"
     exec ./start.sh
     ;;
   start-client-b)
     load_env
-    export HELLO_REGRESSION_EXECUTOR="${HELLO_REGRESSION_EXECUTOR:-tsd}"
-    export HELLO_REGRESSION_TSD_CONFIG_DIR="${HELLO_REGRESSION_TSD_CONFIG_DIR:-${workdir}/tsd-configs}"
+    export HELLO_REGRESSION_EXECUTOR="tsd"
+    export HELLO_REGRESSION_TSD_CONFIG="${workdir}/tsd-configs/${WRAPPER_B_NAME}.yml"
     cd "$(startup_dir "${WRAPPER_B_NAME}")"
     exec ./start.sh
     ;;
   start-client-c)
     load_env
-    export HELLO_REGRESSION_EXECUTOR="${HELLO_REGRESSION_EXECUTOR:-dx}"
-    export HELLO_REGRESSION_DX_CONFIG_DIR="${HELLO_REGRESSION_DX_CONFIG_DIR:-${workdir}/dx-configs}"
+    export HELLO_REGRESSION_EXECUTOR="dx"
+    export HELLO_REGRESSION_DX_CONFIG="${workdir}/dx-configs/${WRAPPER_C_NAME}.yml"
     cd "$(startup_dir "${WRAPPER_C_NAME}")"
     exec ./start.sh
     ;;
@@ -200,13 +221,21 @@ case "${command_name}" in
   submit)
     load_env
     python_bin="$(detect_python)"
-    export HELLO_REGRESSION_SITE_MAP="${HELLO_REGRESSION_SITE_MAP:-${workdir}/sim-site-map.json}"
+    mapfile -t detected_clients < <(configured_clients)
+    if [[ ${#detected_clients[@]} -eq 0 ]]; then
+      echo "No configured wrapper clients found under ${workdir}/tsd-configs or ${workdir}/dx-configs" >&2
+      exit 1
+    fi
     cd "${repo_root}"
-    exec "${python_bin}" examples/hello_regression/job.py \
-      --env sim \
-      --startup_kit "$(participant_dir "${ADMIN_NAME}")" \
-      --username "${ADMIN_NAME}" \
-      "$@"
+    job_cmd=(
+      "${python_bin}" examples/hello_regression/job.py
+      --env prod
+      --clients "${detected_clients[@]}"
+      --startup_kit "$(participant_dir "${ADMIN_NAME}")"
+      --username ""
+    )
+    job_cmd+=("$@")
+    exec "${job_cmd[@]}"
     ;;
   *)
     usage

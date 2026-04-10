@@ -4,7 +4,7 @@
 
 Run the same checked-in `hello_regression` example as tutorial 1, but against a real NVFlare server and real NVFlare clients.
 
-Suggested mode: `prod`.
+Mode: `prod`.
 
 For tutorial 2, the requirement is a publicly reachable FL endpoint. The server process can run on:
 
@@ -21,7 +21,7 @@ This tutorial uses:
 
 The client synthesizes site-local data from the site name. No data files need to be copied to the clients.
 
-This is the tutorial where running `examples/hello_regression/job.py --env prod ...` makes the most sense, because the point is to exercise the real provisioned server, client, and admin startup kits.
+This tutorial runs `examples/hello_regression/job.py --env prod ...`, because the point is to exercise the real provisioned server, client, and admin startup kits.
 
 ## Topology
 
@@ -97,6 +97,7 @@ Each client:
 
 ```bash
 source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
+export HELLO_REGRESSION_EXECUTOR=local
 cd /path/to/copied/client-kit/startup
 ./start.sh
 ```
@@ -124,7 +125,7 @@ From the repository root on a machine that has the admin startup kit:
 source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
 python examples/hello_regression/job.py \
   --env prod \
-  --n_clients 2 \
+  --clients site-a site-b \
   --startup_kit /path/to/copied/admin-kit \
   --username <admin-name-from-.env>
 ```

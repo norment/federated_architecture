@@ -25,5 +25,6 @@ builders:
   - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
     args: { template_file: master_template.yml }
   - path: nvflare.lighter.impl.static_file.StaticFileBuilder
+    args: {}
   - path: nvflare.lighter.impl.cert.CertBuilder
   - path: nvflare.lighter.impl.signature.SignatureBuilder

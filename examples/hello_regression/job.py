@@ -11,7 +11,7 @@ from nvflare.app_common.aggregators.model_aggregator import ModelAggregator
 from nvflare.apis.fl_constant import FLContextKey
 from nvflare.apis.fl_context import FLContext
 from nvflare.client import FLModel
-from nvflare.recipe import ProdEnv, SimEnv
+from nvflare.recipe import PocEnv, ProdEnv, SimEnv
 
 
 def _get_run_dir(fl_ctx: FLContext):
@@ -87,20 +87,30 @@ class RegressionAggregator(ModelAggregator):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run the hello_regression federated example.")
-    parser.add_argument("--env", choices=["sim", "prod"], default="sim")
-    parser.add_argument("--n_clients", type=int, default=2, help="Minimum clients required for the job.")
+    parser.add_argument(
+        "--env",
+        choices=["sim", "prod", "poc"],
+        default="sim",
+        help="Execution environment: simulator (`sim`), live startup kits (`prod`), or NVFlare-managed local POC (`poc`).",
+    )
+    parser.add_argument(
+        "--clients",
+        nargs="+",
+        default=None,
+        help="Explicit participating client names. The job runs against exactly these named clients.",
+    )
     parser.add_argument("--num_rounds", type=int, default=1, help="Regression example uses one round by default.")
     parser.add_argument(
         "--startup_kit",
         type=str,
         default=None,
-        help="Admin startup kit location for prod runs.",
+        help="Admin startup kit location for `prod` runs.",
     )
     parser.add_argument(
         "--username",
         type=str,
         default="admin@demo.org",
-        help="Admin username for prod runs.",
+        help="Admin username for `prod` or `poc` runs.",
     )
     return parser.parse_args()
 
@@ -110,11 +120,15 @@ def main():
     work_dir = Path(__file__).resolve().parent
     repo_root = work_dir.parent.parent
     os.chdir(work_dir)
+    if not args.clients:
+        raise ValueError("`--clients` is required.")
+
+    resolved_min_clients = len(args.clients)
 
     recipe = NumpyFedAvgRecipe(
         name="hello_regression",
         model=[0.0, 0.0, 0.0, 0.0],
-        min_clients=args.n_clients,
+        min_clients=resolved_min_clients,
         num_rounds=args.num_rounds,
         train_script="client.py",
         aggregator=RegressionAggregator(),
@@ -130,7 +144,9 @@ def main():
     recipe.job.add_file_to_clients(str(repo_root / "tre_wrappers" / "dx.py"), dest_dir="tre_wrappers")
 
     if args.env == "sim":
-        env = SimEnv(num_clients=args.n_clients)
+        env = SimEnv(clients=args.clients)
+    elif args.env == "poc":
+        env = PocEnv(clients=args.clients, username=args.username)
     else:
         if not args.startup_kit:
             raise ValueError("--startup_kit is required for --env prod")

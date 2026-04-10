@@ -181,6 +181,56 @@ class DXJobFailedError(RuntimeError):
         self.stderr_tail = stderr_tail
 
 
+def _mock_mode_enabled() -> bool:
+    return os.environ.get("HELLO_REGRESSION_DX_MOCK_MODE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+        "local",
+    }
+
+
+def _run_dx_job_mock(settings: DXSettings, spec: DXRunSpec) -> DXRunResult:
+    print(f"DX wrapper: mock mode local execution for {spec.site_name}")
+
+    with tempfile.TemporaryDirectory(prefix=f"{slugify(spec.site_name)}_dx_mock_") as tmp_dir:
+        remote_folder = Path(tmp_dir) / "remote_folder"
+        remote_folder.mkdir(parents=True, exist_ok=True)
+        for file_path in spec.upload_files:
+            shutil.copy2(file_path, remote_folder / file_path.name)
+
+        command_lines = []
+        if settings.remote_setup:
+            command_lines.append(settings.remote_setup)
+        command_lines.append(spec.remote_command.strip())
+        result = subprocess.run(
+            ["bash", "-lc", "set -euo pipefail\n" + "\n".join(command_lines)],
+            cwd=str(remote_folder),
+            text=True,
+            capture_output=True,
+            check=False,
+            env=os.environ.copy(),
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"DX mock job failed for {spec.site_name} with code {result.returncode}\n"
+                f"STDOUT:\n{result.stdout.strip()}\n"
+                f"STDERR:\n{result.stderr.strip()}"
+            )
+
+        result_path = remote_folder / spec.result_filename
+        if not result_path.exists():
+            raise FileNotFoundError(f"DX mock result not found: {result_path}")
+
+        return DXRunResult(
+            job_id=f"mock-dx-{slugify(spec.site_name)}",
+            result_bytes=result_path.read_bytes(),
+            job_info={"state": "done", "mock_mode": True},
+            remote_folder=str(remote_folder),
+        )
+
+
 def _dx_bin(settings: DXSettings) -> str:
     if settings.dx_bin_override:
         return settings.dx_bin_override
@@ -302,6 +352,9 @@ def _cleanup_remote_folder(settings: DXSettings, remote_folder: str) -> None:
 
 
 def run_dx_job(settings: DXSettings, spec: DXRunSpec) -> DXRunResult:
+    if _mock_mode_enabled():
+        return _run_dx_job_mock(settings, spec)
+
     remote_folder = _full_remote_folder(settings, spec)
     input_ids = [_upload_file(settings, path, remote_folder) for path in spec.upload_files]
 

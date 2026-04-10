@@ -9,36 +9,14 @@ from pathlib import Path
 import nvflare.client as flare
 
 
-def _load_site_map() -> dict:
-    configured = os.environ.get("HELLO_REGRESSION_SITE_MAP", "").strip()
+def _get_executor() -> str:
+    configured = os.environ.get("HELLO_REGRESSION_EXECUTOR", "").strip().lower()
     if not configured:
-        return {}
-
-    site_map_path = Path(configured).expanduser()
-    if not site_map_path.exists():
-        raise FileNotFoundError(f"Configured site map not found: {site_map_path}")
-
-    data = json.loads(site_map_path.read_text())
-    if not isinstance(data, dict):
-        raise RuntimeError(f"Site map must be a JSON object: {site_map_path}")
-    return data
-
-
-def _resolve_site_context(flare_site_name: str) -> tuple[str, str]:
-    site_map = _load_site_map()
-    entry = site_map.get(flare_site_name)
-    if not entry:
-        executor = os.environ.get("HELLO_REGRESSION_EXECUTOR", "local").strip().lower()
-        return flare_site_name, executor
-
-    logical_site_name = str(entry.get("site_name") or flare_site_name)
-    executor = str(entry.get("executor") or os.environ.get("HELLO_REGRESSION_EXECUTOR", "local")).strip().lower()
-    env_overrides = entry.get("env") or {}
-    if not isinstance(env_overrides, dict):
-        raise RuntimeError(f"Invalid env mapping for simulated site {flare_site_name}")
-    for key, value in env_overrides.items():
-        os.environ[str(key)] = str(value)
-    return logical_site_name, executor
+        raise RuntimeError(
+            "HELLO_REGRESSION_EXECUTOR is required. "
+            "Set it to 'local', 'tsd', or 'dx' before starting the client process."
+        )
+    return configured
 
 
 def _run_local_site_task(site_name: str) -> dict:
@@ -88,12 +66,9 @@ def run_site_task(site_name: str, executor: str) -> dict:
 
 def main():
     flare.init()
-    flare_site_name = flare.get_site_name()
-    site_name, executor = _resolve_site_context(flare_site_name)
-    print(
-        f"hello_regression client started on {flare_site_name} "
-        f"(logical_site={site_name}) with executor={executor}"
-    )
+    site_name = flare.get_site_name()
+    executor = _get_executor()
+    print(f"hello_regression client started on {site_name} with executor={executor}")
 
     while flare.is_running():
         input_model = flare.receive()

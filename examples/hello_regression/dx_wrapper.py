@@ -21,58 +21,22 @@ def _run_token(site_name: str) -> str:
     return f"{slugify(site_name)}-{timestamp}-{uuid.uuid4().hex[:8]}"
 
 
-def _wrapper_config_path(site_name: str, custom_dir: Path) -> Path:
-    configured = os.environ.get("HELLO_REGRESSION_DX_CONFIG")
-    if configured:
-        return Path(configured).expanduser()
-
-    config_dir = os.environ.get("HELLO_REGRESSION_DX_CONFIG_DIR")
-    if config_dir:
-        config_dir_path = Path(config_dir).expanduser()
-        for filename in (f"{site_name}.yml", f"{slugify(site_name)}.yml"):
-            candidate = config_dir_path / filename
-            if candidate.exists():
-                return candidate
-
-    filenames = [f"{site_name}.yml"]
-    slugged = f"{slugify(site_name)}.yml"
-    if slugged not in filenames:
-        filenames.append(slugged)
-
-    search_roots = []
-    for root in (Path.cwd().resolve(), custom_dir.resolve()):
-        if root not in search_roots:
-            search_roots.append(root)
-    for root in search_roots:
-        for parent in (root, *root.parents):
-            for filename in filenames:
-                candidate = parent / "dx-configs" / filename
-                if candidate.exists():
-                    return candidate
-
-    default_path = custom_dir / "dx_wrapper_config.yml"
-    if default_path.exists():
-        return default_path
-
-    template_path = custom_dir / "dx_wrapper_config.yml.template"
-    if template_path.exists():
-        raise RuntimeError(
-            "Missing DX wrapper config. Put a site-specific file like "
-            f"dx-configs/{slugify(site_name)}.yml on the host, set HELLO_REGRESSION_DX_CONFIG_DIR, "
-            "or set HELLO_REGRESSION_DX_CONFIG=/path/to/site-config.yml before starting the client."
-        )
-
-    raise FileNotFoundError("DX wrapper config not found")
-
-
 def run_dx_site_task(site_name: str) -> dict:
     custom_dir = Path(__file__).resolve().parent
     common_path = custom_dir / "common.py"
     runner_path = custom_dir / "site_runner.py"
-    config_path = _wrapper_config_path(site_name, custom_dir)
+    configured = os.environ.get("HELLO_REGRESSION_DX_CONFIG", "").strip()
+    if not configured:
+        raise RuntimeError(
+            "HELLO_REGRESSION_DX_CONFIG is required for the DX wrapper. "
+            "Set it to the site-specific YAML config path before starting the client process."
+        )
+    config_path = Path(configured).expanduser()
 
     if not common_path.exists() or not runner_path.exists():
         raise FileNotFoundError("common.py or site_runner.py not found next to client.py")
+    if not config_path.exists():
+        raise FileNotFoundError(f"DX wrapper config not found: {config_path}")
 
     settings = DXSettings.from_config(
         config_path=config_path,

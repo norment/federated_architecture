@@ -15,6 +15,7 @@ You need a Python environment with at least:
 
 - `nvflare`
 - `numpy`
+- `pytest`
 
 How you get that environment depends on the platform:
 
@@ -26,7 +27,7 @@ The important part is not the tool. The important part is that the shell where y
 
 The tutorials that use checked-in `.env.template` files also use [`scripts/provision_from_env.sh`](../scripts/provision_from_env.sh), which expects `envsubst` to be available.
 
-For tutorial 3, use the same environment and add the lightweight wrapper dependencies:
+For tutorial 3, use the same environment and add the lightweight wrapper dependencies needed by the local POC-based wrapper workflow:
 
 - `tsd-api-client`
 - `dxpy`
@@ -39,7 +40,7 @@ Create one venv on each machine that will run NVFlare:
 python3 -m venv ~/venvs/nvflare
 source ~/venvs/nvflare/bin/activate
 python -m pip install --upgrade pip
-pip install nvflare numpy tsd-api-client dxpy
+pip install nvflare numpy pytest tsd-api-client dxpy
 nvflare --version
 ```
 
@@ -123,11 +124,11 @@ You need Python + NVFlare on:
 - the host that runs the wrapper clients
 - the machine where you run provisioning, `fl_admin.sh`, or `examples/hello_regression/job.py`
 
-In tutorial 3, the simplest pattern is to run the NVFlare server and the wrapper clients on the same non-TRE host.
+In tutorial 3, the intended pattern is to prepare a local NVFlare POC workspace on one non-TRE host and run the server and wrapper clients from there.
 
 You do not need NVFlare inside the TRE. The wrapper stays outside the TRE and talks to the TRE through its own API.
 
-Tutorial 3 in this repo assumes a local-only NVFlare topology on one host. It does not require a public FL endpoint for the server. See [wrapper clients for TRE sites](tutorials/03-wrapper-clients.md), [TSD](sites/tsd.md), and [UK Biobank RAP / DNAnexus](sites/ukb-rap.md).
+Tutorial 3 in this repo assumes a local-only NVFlare topology on one host with a POC-prepared workspace. It does not require a public FL endpoint for the server. See [wrapper clients for TRE sites](tutorials/03-wrapper-clients.md), [TSD](sites/tsd.md), and [UK Biobank RAP / DNAnexus](sites/ukb-rap.md).
 
 ## How Many Shells Do You Need?
 

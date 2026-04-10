@@ -41,8 +41,20 @@ The server sums these across sites and solves the global linear regression.
 
 This is the shared example used by all three tutorials:
 
-- tutorial 1: simulation on one machine
-- tutorial 2: native multi-site deployment
-- tutorial 3: wrapper pattern
+- tutorial 1: `sim` on one machine
+- tutorial 2: `prod` with native multi-site deployment
+- tutorial 3: `poc` workspace with wrapper clients
 
-The executor selection inside `client.py` is the wrapper boundary. The default executor is still the local subprocess path. The TSD path is split into a reusable transport in `tre_wrappers/tsd.py` and an example adapter in `tsd_wrapper.py`. The DX path follows the same pattern with `tre_wrappers/dx.py` and `dx_wrapper.py`. All three executors now use the same `site_runner.py` and `common.py` logic for local-stat generation; `common.py` keeps that site-side path stdlib-only so RAP does not need `numpy` just to run the tutorial. For real wrapper runs, each wrapper client uses a site-specific config copied from the matching template. If you place files like `tsd-configs/<site-name>.yml` or `dx-configs/<site-name>.yml` near the wrapper workspace, the adapters auto-discover them.
+The executor selection inside `client.py` is the wrapper boundary. Set `HELLO_REGRESSION_EXECUTOR` explicitly before starting each client process: use `local` for tutorials 1 and 2, `tsd` for TSD wrapper clients, and `dx` for RAP wrapper clients. Wrapper clients also require an explicit site config path: `HELLO_REGRESSION_TSD_CONFIG=/path/to/site.yml` or `HELLO_REGRESSION_DX_CONFIG=/path/to/site.yml`. The TSD path is split into a reusable transport in `tre_wrappers/tsd.py` and an example adapter in `tsd_wrapper.py`. The DX path follows the same pattern with `tre_wrappers/dx.py` and `dx_wrapper.py`. All three executors use the same `site_runner.py` and `common.py` logic for local-stat generation; `common.py` keeps that site-side path stdlib-only so RAP does not need `numpy` just to run the tutorial.
+
+`job.py --env` means the NVFlare execution environment used to launch or submit the job:
+
+- `sim`: run in the simulator with explicit `--clients`
+- `prod`: submit to already running server/client/admin startup kits
+- `poc`: let NVFlare manage a local POC workspace directly
+
+The checked-in tutorials still use:
+
+- tutorial 1: `job.py --env sim`
+- tutorial 2: `job.py --env prod`
+- tutorial 3: helper-managed `poc` workspace, then `job.py --env prod` against that live local workspace

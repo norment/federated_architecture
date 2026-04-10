@@ -60,6 +60,39 @@ Examples in this repo:
 - TSD via upload -> submit job -> wait -> download result
 - UKB RAP / DNAnexus via `dx run` or Swiss Army Knife
 
+## Execution Modes
+
+This repo uses three execution modes:
+
+- `sim`: run the job through the NVFlare simulator on one host
+- `prod`: run against live provisioned server, client, and admin processes
+- `poc`: prepare a local multi-process NVFlare workspace for one-host development
+
+In this repo, the tutorials use fixed modes:
+
+- tutorial 1 uses `sim`
+- tutorial 2 uses `prod`
+- tutorial 3 uses `poc`
+
+Tutorial 3 still submits the job with `--env prod`, because the job talks to live local NVFlare processes in the prepared POC workspace rather than to the simulator.
+
+## Certificates And Signing In `prod`
+
+Provisioned NVFlare startup kits include certificates, private keys, and signed material for the server, clients, and admin user.
+
+That means a `prod` run is not just "the same as `sim`, but with more processes." It also adds trust setup:
+
+- participants must come from the same provisioning run
+- names and host identities must match what was provisioned
+- the correct startup kit must be used for each server, client, and admin participant
+
+This is why `prod` failures often look like deployment failures rather than application failures:
+
+- hostname or certificate name mismatch
+- mixed startup kits from different provisioning runs
+- stale workspace after reprovisioning
+- wrong participant startup directory during launch or submission
+
 ## Operating Model
 
 This repo assumes an analysis-session model, not a persistent service:

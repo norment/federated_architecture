@@ -8,10 +8,11 @@ TRUE_BETA = [1.5, 0.04, -0.6, 1.2]
 
 
 SITE_CONFIGS = {
-    "site-0": {"seed": 101, "n": 24, "age_mean": 45.0, "sex_prob": 0.40, "exposure_mean": -0.2},
-    "site-1": {"seed": 202, "n": 32, "age_mean": 58.0, "sex_prob": 0.55, "exposure_mean": 0.5},
     "site-a": {"seed": 101, "n": 24, "age_mean": 45.0, "sex_prob": 0.40, "exposure_mean": -0.2},
     "site-b": {"seed": 202, "n": 32, "age_mean": 58.0, "sex_prob": 0.55, "exposure_mean": 0.5},
+    "p33": {"seed": 303, "n": 28, "age_mean": 49.0, "sex_prob": 0.46, "exposure_mean": -0.1},
+    "p697": {"seed": 404, "n": 30, "age_mean": 61.0, "sex_prob": 0.52, "exposure_mean": 0.35},
+    "ukb-rap": {"seed": 505, "n": 34, "age_mean": 56.0, "sex_prob": 0.43, "exposure_mean": 0.8},
 }
 
 

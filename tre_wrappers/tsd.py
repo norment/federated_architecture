@@ -254,6 +254,66 @@ class TSDJobFailedError(RuntimeError):
         self.job_info = job_info
 
 
+def _mock_mode_enabled() -> bool:
+    return os.environ.get("HELLO_REGRESSION_TSD_MOCK_MODE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+        "local",
+    }
+
+
+def _run_tsd_job_mock(*, settings: TSDSettings, spec: TSDRunSpec) -> TSDRunResult:
+    print(f"TSD wrapper: mock mode local execution for {spec.site_name}")
+
+    with tempfile.TemporaryDirectory(prefix=f"{slugify(spec.site_name)}_tsd_mock_") as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        remote_import_dir = tmp_path / "remote_import"
+        remote_export_dir = tmp_path / "remote_export"
+        remote_work_dir = tmp_path / "remote_work"
+        remote_import_dir.mkdir(parents=True, exist_ok=True)
+        remote_export_dir.mkdir(parents=True, exist_ok=True)
+        remote_work_dir.mkdir(parents=True, exist_ok=True)
+
+        for file_path in spec.upload_files:
+            shutil.copy2(file_path, remote_import_dir / file_path.name)
+
+        command_lines = []
+        if settings.remote_setup:
+            command_lines.append(settings.remote_setup)
+        command_lines.append(spec.remote_command.strip())
+        result = subprocess.run(
+            ["bash", "-lc", "set -euo pipefail\n" + "\n".join(command_lines)],
+            cwd=str(remote_import_dir),
+            text=True,
+            capture_output=True,
+            check=False,
+            env={
+                **os.environ,
+                "REMOTE_IMPORT_DIR": str(remote_import_dir),
+                "REMOTE_EXPORT_DIR": str(remote_export_dir),
+                "REMOTE_WORK_DIR": str(remote_work_dir),
+            },
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"TSD mock job failed for {spec.site_name} with code {result.returncode}\n"
+                f"STDOUT:\n{result.stdout.strip()}\n"
+                f"STDERR:\n{result.stderr.strip()}"
+            )
+
+        result_path = remote_export_dir / spec.result_filename
+        if not result_path.exists():
+            raise FileNotFoundError(f"TSD mock result not found: {result_path}")
+
+        return TSDRunResult(
+            job_id=f"mock-tsd-{slugify(spec.site_name)}",
+            result_bytes=result_path.read_bytes(),
+            job_info={"job_state": "COMPLETED", "mock_mode": True},
+        )
+
+
 def _tacl_cmd(settings: TSDSettings, args: list[str]) -> list[str]:
     if settings.tacl_bin_override:
         tacl_bin = settings.tacl_bin_override
@@ -471,6 +531,8 @@ def _log_excerpt(data: bytes | None, label: str) -> str | None:
 def run_tsd_job(*, settings: TSDSettings, spec: TSDRunSpec) -> TSDRunResult:
     if not spec.upload_files:
         raise ValueError("upload_files must not be empty")
+    if _mock_mode_enabled():
+        return _run_tsd_job_mock(settings=settings, spec=spec)
 
     with tempfile.TemporaryDirectory(prefix=f"{slugify(spec.site_name)}_tsd_wrapper_") as tmp_dir:
         tmp_path = Path(tmp_dir)

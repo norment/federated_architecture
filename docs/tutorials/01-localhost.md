@@ -6,9 +6,9 @@ Run the checked-in `hello_regression` example entirely on one machine.
 
 The example synthesizes site-local data inside the client code, so no CSV or other input files need to be copied anywhere.
 
-Suggested mode: `sim`.
+Mode: `sim`.
 
-Tutorial 1 is the quick local validation path. If you want to exercise real NVFlare server and client processes, move to tutorial 2 and use `--env prod`.
+Tutorial 1 is the quick local validation path. The next tutorial switches to live provisioned processes in `prod`.
 
 ## Shared Example
 
@@ -22,7 +22,8 @@ Fastest first run:
 
 ```bash
 source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
-python examples/hello_regression/job.py --env sim --n_clients 2
+HELLO_REGRESSION_EXECUTOR=local \
+python examples/hello_regression/job.py --env sim --clients site-a site-b
 ```
 
 Run that from the repository root. The manual provisioning below is only to inspect the server/client/admin mechanics.
@@ -88,6 +89,7 @@ cd ~/nvflare_local_demo
 set -a
 source .env
 set +a
+export HELLO_REGRESSION_EXECUTOR=local
 cd workspace/${PROJECT_NAME}/prod_00/${CLIENT_A_NAME}/startup
 ./start.sh
 ```
@@ -100,6 +102,7 @@ cd ~/nvflare_local_demo
 set -a
 source .env
 set +a
+export HELLO_REGRESSION_EXECUTOR=local
 cd workspace/${PROJECT_NAME}/prod_00/${CLIENT_B_NAME}/startup
 ./start.sh
 ```

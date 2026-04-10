@@ -44,10 +44,10 @@ More detail: [`docs/nvflare-basics.md`](docs/nvflare-basics.md)
 
 - [`docs/prerequisites.md`](docs/prerequisites.md)
 - [`examples/hello_regression/README.md`](examples/hello_regression/README.md): shared runnable example
-- [`docs/tutorials/01-localhost.md`](docs/tutorials/01-localhost.md): tutorial 1
-- [`docs/tutorials/02-dedicated-server-native-clients.md`](docs/tutorials/02-dedicated-server-native-clients.md): tutorial 2
+- [`docs/tutorials/01-localhost.md`](docs/tutorials/01-localhost.md): tutorial 1 (`sim`)
+- [`docs/tutorials/02-dedicated-server-native-clients.md`](docs/tutorials/02-dedicated-server-native-clients.md): tutorial 2 (`prod`)
 - [`docs/tutorials/02-server-endpoint-options.md`](docs/tutorials/02-server-endpoint-options.md): tutorial 2 endpoint choices
-- [`docs/tutorials/03-wrapper-clients.md`](docs/tutorials/03-wrapper-clients.md): tutorial 3
+- [`docs/tutorials/03-wrapper-clients.md`](docs/tutorials/03-wrapper-clients.md): tutorial 3 (`poc`)
 - [`docs/advanced-nvflare.md`](docs/advanced-nvflare.md): optional advanced notes
 
 ## Site Notes
