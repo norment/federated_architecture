@@ -6,6 +6,10 @@ Run the checked-in `hello_regression` example entirely on one machine.
 
 The example synthesizes site-local data inside the client code, so no CSV or other input files need to be copied anywhere.
 
+Suggested mode: `sim`.
+
+Tutorial 1 is the quick local validation path. If you want to exercise real NVFlare server and client processes, move to tutorial 2 and use `--env prod`.
+
 ## Shared Example
 
 This tutorial uses:

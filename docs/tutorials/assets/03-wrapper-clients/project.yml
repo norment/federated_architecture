@@ -14,6 +14,9 @@ participants:
   - name: ${WRAPPER_B_NAME}
     type: client
     org: ${ORG_NAME}
+  - name: ${WRAPPER_C_NAME}
+    type: client
+    org: ${ORG_NAME}
   - name: ${ADMIN_NAME}
     type: admin
     org: ${ORG_NAME}

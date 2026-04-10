@@ -4,6 +4,8 @@
 
 Run the same checked-in `hello_regression` example as tutorial 1, but against a real NVFlare server and real NVFlare clients.
 
+Suggested mode: `prod`.
+
 For tutorial 2, the requirement is a publicly reachable FL endpoint. The server process can run on:
 
 - a dedicated public machine
@@ -18,6 +20,8 @@ This tutorial uses:
 - [examples/hello_regression/job.py](../../examples/hello_regression/job.py)
 
 The client synthesizes site-local data from the site name. No data files need to be copied to the clients.
+
+This is the tutorial where running `examples/hello_regression/job.py --env prod ...` makes the most sense, because the point is to exercise the real provisioned server, client, and admin startup kits.
 
 ## Topology
 

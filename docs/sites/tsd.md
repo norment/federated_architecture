@@ -22,6 +22,34 @@ That wrapper client should call the TSD HPC API, wait for completion, download t
 - a TSD project admin should request that whitelisting by contacting `tsd-drift@usit.uio.no`
 - VPN when required by the project setup
 
+For the current tutorial-3 example, the local host needs access to both `p33` and `p697`.
+
+Use the shared Python environment from [Prerequisites](../prerequisites.md#python-environment).
+
+## One-Time Registration
+
+Register each TSD project once on the local wrapper host:
+
+```bash
+source ~/venvs/nvflare/bin/activate
+
+tacl --register p33
+tacl --register p697
+```
+
+## Priming
+
+Before each federated session, refresh and verify the cached TSD sessions:
+
+```bash
+source ~/venvs/nvflare/bin/activate
+
+./scripts/prime_tsd_session.sh --username p33-yourusername
+./scripts/prime_tsd_session.sh --username p697-yourusername
+```
+
+The helper verifies File API and HPC API access and refreshes cached tokens under your home directory. Do not put password or OTP in tracked config files.
+
 ## Wrapper Lifecycle
 
 1. Build a zip of the pipeline files.
@@ -60,3 +88,4 @@ Before wiring TSD into NVFlare, validate the wrapper sequence by itself:
 ## Related Docs
 
 - [Wrapper clients for TRE sites](../tutorials/03-wrapper-clients.md)
+- [UK Biobank RAP / DNAnexus](ukb-rap.md)

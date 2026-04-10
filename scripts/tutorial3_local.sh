@@ -6,20 +6,24 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 usage() {
   cat <<'EOF' >&2
 Usage:
-  tutorial3_local.sh init <workdir> --p33-user <username> --p697-user <username> [--force]
+  tutorial3_local.sh init <workdir> [--p33-user <username>] [--p697-user <username>] [--dx-project <project-id>] [--force]
   tutorial3_local.sh start-server <workdir>
   tutorial3_local.sh start-client-a <workdir>
   tutorial3_local.sh start-client-b <workdir>
+  tutorial3_local.sh start-client-c <workdir>
   tutorial3_local.sh start-admin <workdir>
   tutorial3_local.sh submit <workdir> [job.py args...]
 
 Examples:
-  ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo --p33-user p33-ofrei --p697-user p697-ofrei
+  ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo --p33-user p33-ofrei --p697-user p697-ofrei --dx-project project-REDACTED1234567890EXAMPLE
+  ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo_dx --dx-project project-REDACTED1234567890EXAMPLE
   ./scripts/tutorial3_local.sh start-server ~/nvflare_wrapper_demo
   ./scripts/tutorial3_local.sh start-client-a ~/nvflare_wrapper_demo
   ./scripts/tutorial3_local.sh start-client-b ~/nvflare_wrapper_demo
+  ./scripts/tutorial3_local.sh start-client-c ~/nvflare_wrapper_demo
   ./scripts/tutorial3_local.sh start-admin ~/nvflare_wrapper_demo
-  ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --n_clients 2
+  ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --n_clients 3
+  ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo --env prod --n_clients 3
 EOF
   exit 1
 }
@@ -51,8 +55,8 @@ detect_python() {
     printf '%s\n' "${VIRTUAL_ENV}/bin/python"
     return
   fi
-  if [[ -x "${HOME}/venvs/nvflare_tutorial3/bin/python" ]]; then
-    printf '%s\n' "${HOME}/venvs/nvflare_tutorial3/bin/python"
+  if [[ -x "${HOME}/venvs/nvflare/bin/python" ]]; then
+    printf '%s\n' "${HOME}/venvs/nvflare/bin/python"
     return
   fi
   printf '%s\n' "python3"
@@ -83,6 +87,7 @@ case "${command_name}" in
 
     p33_user=""
     p697_user=""
+    dx_project=""
     force="false"
     while [[ $# -gt 0 ]]; do
       case "$1" in
@@ -92,6 +97,10 @@ case "${command_name}" in
           ;;
         --p697-user)
           p697_user="${2:-}"
+          shift 2
+          ;;
+        --dx-project)
+          dx_project="${2:-}"
           shift 2
           ;;
         --force)
@@ -105,12 +114,12 @@ case "${command_name}" in
       esac
     done
 
-    if [[ -z "${p33_user}" || -z "${p697_user}" ]]; then
-      echo "init requires --p33-user and --p697-user" >&2
+    if [[ -z "${p33_user}" && -z "${p697_user}" && -z "${dx_project}" ]]; then
+      echo "init requires at least one site option: --p33-user, --p697-user, or --dx-project" >&2
       usage
     fi
 
-    mkdir -p "${workdir}" "${workdir}/tsd-configs"
+    mkdir -p "${workdir}" "${workdir}/tsd-configs" "${workdir}/dx-configs"
 
     if [[ "${force}" == "true" ]]; then
       cp "${repo_root}/docs/tutorials/assets/03-wrapper-clients/.env.template" "${workdir}/.env"
@@ -127,18 +136,35 @@ case "${command_name}" in
     bash "${repo_root}/scripts/provision_from_env.sh" "${workdir}"
 
     python_bin="$(detect_python)"
-    "${python_bin}" "${repo_root}/scripts/make_tsd_site_config.py" \
-      --username "${p33_user}" \
-      --output "${workdir}/tsd-configs/p33.yml" \
-      --force
-    "${python_bin}" "${repo_root}/scripts/make_tsd_site_config.py" \
-      --username "${p697_user}" \
-      --output "${workdir}/tsd-configs/p697.yml" \
-      --force
+    if [[ -n "${p33_user}" ]]; then
+      "${python_bin}" "${repo_root}/scripts/make_tsd_site_config.py" \
+        --username "${p33_user}" \
+        --output "${workdir}/tsd-configs/p33.yml" \
+        --force
+      printf '%s\n' "Generated ${workdir}/tsd-configs/p33.yml"
+    fi
+    if [[ -n "${p697_user}" ]]; then
+      "${python_bin}" "${repo_root}/scripts/make_tsd_site_config.py" \
+        --username "${p697_user}" \
+        --output "${workdir}/tsd-configs/p697.yml" \
+        --force
+      printf '%s\n' "Generated ${workdir}/tsd-configs/p697.yml"
+    fi
+    if [[ -n "${dx_project}" ]]; then
+      "${python_bin}" "${repo_root}/scripts/make_dx_site_config.py" \
+        --project "${dx_project}" \
+        --output "${workdir}/dx-configs/ukb-rap.yml" \
+        --force
+      printf '%s\n' "Generated ${workdir}/dx-configs/ukb-rap.yml"
+    fi
+    "${python_bin}" "${repo_root}/scripts/make_wrapper_site_map.py" \
+      --output "${workdir}/sim-site-map.json" \
+      --p33-config "${workdir}/tsd-configs/p33.yml" \
+      --p697-config "${workdir}/tsd-configs/p697.yml" \
+      --dx-config "${workdir}/dx-configs/ukb-rap.yml"
+    printf '%s\n' "Generated ${workdir}/sim-site-map.json"
 
     printf '%s\n' "Initialized tutorial 3 workspace at ${workdir}"
-    printf '%s\n' "Generated ${workdir}/tsd-configs/p33.yml"
-    printf '%s\n' "Generated ${workdir}/tsd-configs/p697.yml"
     ;;
   start-server)
     load_env
@@ -159,6 +185,13 @@ case "${command_name}" in
     cd "$(startup_dir "${WRAPPER_B_NAME}")"
     exec ./start.sh
     ;;
+  start-client-c)
+    load_env
+    export HELLO_REGRESSION_EXECUTOR="${HELLO_REGRESSION_EXECUTOR:-dx}"
+    export HELLO_REGRESSION_DX_CONFIG_DIR="${HELLO_REGRESSION_DX_CONFIG_DIR:-${workdir}/dx-configs}"
+    cd "$(startup_dir "${WRAPPER_C_NAME}")"
+    exec ./start.sh
+    ;;
   start-admin)
     load_env
     cd "$(startup_dir "${ADMIN_NAME}")"
@@ -167,9 +200,10 @@ case "${command_name}" in
   submit)
     load_env
     python_bin="$(detect_python)"
+    export HELLO_REGRESSION_SITE_MAP="${HELLO_REGRESSION_SITE_MAP:-${workdir}/sim-site-map.json}"
     cd "${repo_root}"
     exec "${python_bin}" examples/hello_regression/job.py \
-      --env prod \
+      --env sim \
       --startup_kit "$(participant_dir "${ADMIN_NAME}")" \
       --username "${ADMIN_NAME}" \
       "$@"

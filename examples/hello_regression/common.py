@@ -1,11 +1,10 @@
 import hashlib
+import random
 from typing import Dict, List
-
-import numpy as np
 
 
 FEATURE_NAMES = ["intercept", "age", "sex", "exposure"]
-TRUE_BETA = np.array([1.5, 0.04, -0.6, 1.2], dtype=float)
+TRUE_BETA = [1.5, 0.04, -0.6, 1.2]
 
 
 SITE_CONFIGS = {
@@ -36,47 +35,47 @@ def get_site_config(site_name: str) -> Dict[str, float]:
     return cfg
 
 
-def generate_site_dataset(site_name: str):
+def compute_local_statistics(site_name: str) -> Dict[str, object]:
     cfg = get_site_config(site_name)
-    rng = np.random.default_rng(cfg["seed"])
+    rng = random.Random(cfg["seed"])
 
     n = int(cfg["n"])
-    age = rng.normal(cfg["age_mean"], cfg["age_sd"], size=n)
-    sex = rng.binomial(1, cfg["sex_prob"], size=n).astype(float)
-    exposure = rng.normal(cfg["exposure_mean"] + 0.3 * sex, cfg["exposure_sd"], size=n)
-    noise = rng.normal(0.0, cfg["noise_sd"], size=n)
+    p = len(FEATURE_NAMES)
+    x_tx = [[0.0 for _ in range(p)] for _ in range(p)]
+    x_ty = [0.0 for _ in range(p)]
+    y_ty = 0.0
 
-    x = np.column_stack(
-        [
-            np.ones(n, dtype=float),
-            age,
-            sex,
-            exposure,
-        ]
-    )
-    y = x @ TRUE_BETA + noise
-    return x, y, cfg
+    for _ in range(n):
+        age = rng.gauss(cfg["age_mean"], cfg["age_sd"])
+        sex = 1.0 if rng.random() < cfg["sex_prob"] else 0.0
+        exposure = rng.gauss(cfg["exposure_mean"] + 0.3 * sex, cfg["exposure_sd"])
+        noise = rng.gauss(0.0, cfg["noise_sd"])
 
+        x = [1.0, age, sex, exposure]
+        y = sum(beta * value for beta, value in zip(TRUE_BETA, x)) + noise
 
-def compute_local_statistics(site_name: str) -> Dict[str, object]:
-    x, y, cfg = generate_site_dataset(site_name)
-    x_tx = x.T @ x
-    x_ty = x.T @ y
-    y_ty = float(y.T @ y)
+        for row in range(p):
+            x_ty[row] += x[row] * y
+            for col in range(p):
+                x_tx[row][col] += x[row] * x[col]
+        y_ty += y * y
+
     return {
         "site_name": site_name,
-        "n": int(x.shape[0]),
-        "p": int(x.shape[1]),
-        "x_tx": x_tx.tolist(),
-        "x_ty": x_ty.tolist(),
-        "y_ty": y_ty,
+        "n": n,
+        "p": p,
+        "x_tx": x_tx,
+        "x_ty": x_ty,
+        "y_ty": float(y_ty),
         "feature_names": FEATURE_NAMES,
-        "true_beta": TRUE_BETA.tolist(),
+        "true_beta": TRUE_BETA,
         "site_config": cfg,
     }
 
 
 def aggregate_statistics(local_stats: List[Dict[str, object]]) -> Dict[str, object]:
+    import numpy as np
+
     if not local_stats:
         raise ValueError("no local statistics received")
 
@@ -101,6 +100,8 @@ def aggregate_statistics(local_stats: List[Dict[str, object]]) -> Dict[str, obje
 
 
 def solve_global_regression(aggregate: Dict[str, object]) -> Dict[str, object]:
+    import numpy as np
+
     x_tx = np.asarray(aggregate["x_tx"], dtype=float)
     x_ty = np.asarray(aggregate["x_ty"], dtype=float)
     y_ty = float(aggregate["y_ty"])
@@ -137,7 +138,7 @@ def make_result_summary(local_stats: List[Dict[str, object]]) -> Dict[str, objec
         "site_names": [stats["site_name"] for stats in local_stats],
         "total_samples": fit["n"],
         "per_site_samples": {stats["site_name"]: int(stats["n"]) for stats in local_stats},
-        "true_beta": TRUE_BETA.tolist(),
+        "true_beta": TRUE_BETA,
         "estimated_beta": fit["beta"].tolist(),
         "standard_error": fit["standard_error"].tolist(),
         "sigma2": fit["sigma2"],

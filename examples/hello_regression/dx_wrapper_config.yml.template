@@ -1,0 +1,14 @@
+project: project-REDACTED1234567890EXAMPLE
+folder: /federated_architecture
+app_name: app-swiss-army-knife
+# Leave blank to use the RAP project's default instance type.
+instance_type: ""
+priority: normal
+remote_prefix: hello_regression
+remote_python: python3
+timeout_minutes: 30
+cleanup_remote_folder: true
+
+# Optional setup to run before site_runner.py on the RAP side.
+# Keep this empty unless your RAP execution image needs extra bootstrapping.
+remote_setup: ""
