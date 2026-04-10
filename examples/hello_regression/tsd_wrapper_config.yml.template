@@ -1,0 +1,16 @@
+username: p33-yourusername
+slurm_account: ${PROJECT}_tsd
+remote_prefix: hello_regression
+remote_python: python3
+poll_interval_seconds: 10
+timeout_minutes: 30
+min_valid_seconds: 300
+
+# If project is omitted, the wrapper derives it from the username prefix.
+# The standard paths below show the supported ${PROJECT} and ${USERNAME} substitution.
+import_dir: /tsd/${PROJECT}/data/durable/file-import/${PROJECT}-member-group
+export_dir: /tsd/${PROJECT}/data/durable/file-export
+work_dir: /tsd/${PROJECT}/home/${USERNAME}
+
+# Optional setup to run before site_runner.py on the TSD side.
+remote_setup: ""

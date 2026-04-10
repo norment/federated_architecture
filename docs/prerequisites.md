@@ -122,6 +122,8 @@ In tutorial 3, the simplest pattern is to run the NVFlare server and the wrapper
 
 You do not need NVFlare inside the TRE. The wrapper stays outside the TRE and talks to the TRE through its own API.
 
+Tutorial 3 in this repo assumes a local-only NVFlare topology on one host. It does not require a public FL endpoint for the server. See [tutorial 3 prerequisites](tutorials/03-local-wrapper-prerequisites.md).
+
 ## How Many Shells Do You Need?
 
 ### Tutorial 1
@@ -179,6 +181,7 @@ Tutorial 3 depends on the target TRE:
 
 See:
 
+- [Tutorial 3 prerequisites](tutorials/03-local-wrapper-prerequisites.md)
 - [TSD](sites/tsd.md)
 - [UK Biobank RAP / DNAnexus](sites/ukb-rap.md)
 

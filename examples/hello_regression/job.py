@@ -108,6 +108,7 @@ def parse_args():
 def main():
     args = parse_args()
     work_dir = Path(__file__).resolve().parent
+    repo_root = work_dir.parent.parent
     os.chdir(work_dir)
 
     recipe = NumpyFedAvgRecipe(
@@ -120,6 +121,10 @@ def main():
     )
     recipe.job.to_clients("site_runner.py")
     recipe.job.to_clients("common.py")
+    recipe.job.to_clients("tsd_wrapper.py")
+    recipe.job.to_clients("tsd_wrapper_config.yml.template")
+    recipe.job.add_file_to_clients(str(repo_root / "tre_wrappers" / "__init__.py"), dest_dir="tre_wrappers")
+    recipe.job.add_file_to_clients(str(repo_root / "tre_wrappers" / "tsd.py"), dest_dir="tre_wrappers")
 
     if args.env == "sim":
         env = SimEnv(num_clients=args.n_clients)

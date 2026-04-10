@@ -48,6 +48,7 @@ More detail: [`docs/nvflare-basics.md`](docs/nvflare-basics.md)
 - [`docs/tutorials/02-dedicated-server-native-clients.md`](docs/tutorials/02-dedicated-server-native-clients.md): tutorial 2
 - [`docs/tutorials/02-server-endpoint-options.md`](docs/tutorials/02-server-endpoint-options.md): tutorial 2 endpoint choices
 - [`docs/tutorials/03-wrapper-clients.md`](docs/tutorials/03-wrapper-clients.md): tutorial 3
+- [`docs/tutorials/03-local-wrapper-prerequisites.md`](docs/tutorials/03-local-wrapper-prerequisites.md): tutorial 3 setup assumptions
 - [`docs/advanced-nvflare.md`](docs/advanced-nvflare.md): optional advanced notes
 
 ## Site Notes

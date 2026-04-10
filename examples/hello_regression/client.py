@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -8,7 +9,11 @@ from pathlib import Path
 import nvflare.client as flare
 
 
-def run_site_task(site_name: str) -> dict:
+def _get_executor() -> str:
+    return os.environ.get("HELLO_REGRESSION_EXECUTOR", "local").strip().lower()
+
+
+def _run_local_site_task(site_name: str) -> dict:
     custom_dir = Path(__file__).resolve().parent
     runner_path = custom_dir / "site_runner.py"
 
@@ -37,10 +42,24 @@ def run_site_task(site_name: str) -> dict:
         return json.loads(output_path.read_text())
 
 
+def run_site_task(site_name: str) -> dict:
+    executor = _get_executor()
+    if executor == "local":
+        return _run_local_site_task(site_name)
+    if executor == "tsd":
+        from tsd_wrapper import run_tsd_site_task
+
+        return run_tsd_site_task(site_name)
+    raise RuntimeError(
+        f"Unsupported HELLO_REGRESSION_EXECUTOR={executor!r}. Expected 'local' or 'tsd'."
+    )
+
+
 def main():
     flare.init()
     site_name = flare.get_site_name()
-    print(f"hello_regression client started on {site_name}")
+    executor = _get_executor()
+    print(f"hello_regression client started on {site_name} with executor={executor}")
 
     while flare.is_running():
         input_model = flare.receive()
