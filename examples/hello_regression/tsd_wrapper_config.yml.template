@@ -1,4 +1,4 @@
-username: p33-yourusername
+username: p33-username
 slurm_account: ${PROJECT}_tsd
 remote_prefix: hello_regression
 remote_python: python3

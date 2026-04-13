@@ -41,7 +41,7 @@ This tutorial walks through three local wrapper clients:
 - complete [Prerequisites](../prerequisites.md)
 - create `~/venvs/nvflare` on the non-TRE host that will run both the server and the wrapper clients
 - make sure that host can reach `api.tsd.usit.no`
-- have TSD access ready for both `p33-ofrei` and `p697-ofrei` or the equivalent users you will test with
+- have TSD access ready for both `p33-username` and `p697-username` or the equivalent users you will test with
 - have DX access ready for the RAP project you will test with
 
 Unlike tutorial 2, tutorial 3 does not require a public FL endpoint. The NVFlare server, wrapper clients, and admin shell all run on the same local host, and only the wrapper logic talks to remote site APIs.
@@ -60,13 +60,13 @@ From the repository root:
 ```bash
 source ~/venvs/nvflare/bin/activate
 
-./scripts/prime_tsd_session.sh --username p33-ofrei
-./scripts/prime_tsd_session.sh --username p697-ofrei
+./scripts/prime_tsd_session.sh --username p33-username
+./scripts/prime_tsd_session.sh --username p697-username
 ./scripts/prime_dx_session.sh --project project-REDACTED1234567890EXAMPLE
 
 ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo \
-  --p33-user p33-ofrei \
-  --p697-user p697-ofrei \
+  --p33-user p33-username \
+  --p697-user p697-username \
   --dx-project project-REDACTED1234567890EXAMPLE
 ```
 
@@ -122,6 +122,10 @@ Submit the job:
 source ~/venvs/nvflare/bin/activate
 ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo
 ```
+
+## What Success Looks Like
+
+If the run succeeds, `submit` prints `Job status: FINISHED_COMPLETED`.
 
 The downloaded result bundle ends up under:
 
@@ -188,7 +192,7 @@ Examples:
 
 ```bash
 ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo_p33 \
-  --p33-user p33-yourusername
+  --p33-user p33-username
 
 ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_p33
 ```
@@ -197,8 +201,8 @@ Examples:
 
 ```bash
 ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo_tsd \
-  --p33-user p33-yourusername \
-  --p697-user p697-yourusername
+  --p33-user p33-username \
+  --p697-user p697-username
 
 ./scripts/tutorial3_local.sh submit ~/nvflare_wrapper_demo_tsd
 ```

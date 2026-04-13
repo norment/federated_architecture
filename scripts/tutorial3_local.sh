@@ -15,7 +15,7 @@ Usage:
   tutorial3_local.sh submit <workdir> [job.py args...]
 
 Examples:
-  ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo --p33-user p33-ofrei --p697-user p697-ofrei --dx-project project-REDACTED1234567890EXAMPLE
+  ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo --p33-user p33-username --p697-user p697-username --dx-project project-REDACTED1234567890EXAMPLE
   ./scripts/tutorial3_local.sh init ~/nvflare_wrapper_demo_dx --dx-project project-REDACTED1234567890EXAMPLE
   ./scripts/tutorial3_local.sh start-server ~/nvflare_wrapper_demo
   ./scripts/tutorial3_local.sh start-client-a ~/nvflare_wrapper_demo

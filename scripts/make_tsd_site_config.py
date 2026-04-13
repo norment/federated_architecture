@@ -9,7 +9,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Create a site-specific TSD wrapper config from the checked-in template.",
     )
-    parser.add_argument("--username", required=True, help="TSD username, for example p33-ofrei")
+    parser.add_argument("--username", required=True, help="TSD username, for example p33-username")
     parser.add_argument("--output", required=True, help="Output YAML path, for example ~/nvflare_wrapper_demo/tsd-configs/p33.yml")
     parser.add_argument(
         "--template",

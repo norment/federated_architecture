@@ -65,19 +65,7 @@ More detail: [`docs/nvflare-basics.md`](docs/nvflare-basics.md)
 - `examples/` checked-in runnable examples used by the tutorials
 - `ukb/` tracked UKB RAP / DX command notes
 
-## Relevant Google Docs And Spreadsheets
-
-These links are intentionally kept here because they are part of the working project context.
-
-- [Federated analysis notes](https://docs.google.com/document/d/1GXTNEM4xV8B8EXIqsBx1SABcf-_82UnD5OT2Bu1KVKY/edit?tab=t.0)
-- [Federated analysis studies](https://docs.google.com/spreadsheets/d/1vUDLtJvQESbyEKG9y48WJQ8VzD6K-hYIJnLNc8Wauqs/edit?gid=0#gid=0)
-- [Federated analysis use-cases](https://docs.google.com/spreadsheets/d/1vUDLtJvQESbyEKG9y48WJQ8VzD6K-hYIJnLNc8Wauqs/edit?gid=968194630#gid=968194630)
-
-## Pointers To External Repositories
-
-These are intentionally preserved as working references.
-
-### Servers And Site Integrations
+## External Pointers
 
 - Oslo / NREC as likely server location
 - JCVI server location: TBD
@@ -87,11 +75,8 @@ These are intentionally preserved as working references.
 - EADB: https://github.com/amorris28/eadb-ad-prediction/tree/main/federation
 - Snellius real-world example: https://github.com/lcmoore/FedFEMA/tree/real_world_setup/Snellius/real_world
 - JCVI simulated clients: TBD
-
-### Framework Examples
-
 - NVFlare wrapper around Slurm-style execution: https://github.com/NVIDIA/NVFlare/blob/main/examples/advanced/llm_hf/MULTINODE.md
-
-### Use Cases
-
 - Federated GWAS / FedGen: https://github.com/precimed/FedGen
+- Federated analysis notes: https://docs.google.com/document/d/1GXTNEM4xV8B8EXIqsBx1SABcf-_82UnD5OT2Bu1KVKY/edit?tab=t.0
+- Federated analysis studies: https://docs.google.com/spreadsheets/d/1vUDLtJvQESbyEKG9y48WJQ8VzD6K-hYIJnLNc8Wauqs/edit?gid=0#gid=0
+- Federated analysis use-cases: https://docs.google.com/spreadsheets/d/1vUDLtJvQESbyEKG9y48WJQ8VzD6K-hYIJnLNc8Wauqs/edit?gid=968194630#gid=968194630

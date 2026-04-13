@@ -44,8 +44,8 @@ Before each federated session, refresh and verify the cached TSD sessions:
 ```bash
 source ~/venvs/nvflare/bin/activate
 
-./scripts/prime_tsd_session.sh --username p33-yourusername
-./scripts/prime_tsd_session.sh --username p697-yourusername
+./scripts/prime_tsd_session.sh --username p33-username
+./scripts/prime_tsd_session.sh --username p697-username
 ```
 
 The helper verifies File API and HPC API access and refreshes cached tokens under your home directory. Do not put password or OTP in tracked config files.

@@ -79,6 +79,25 @@ source ~/venvs/nvflare/bin/activate  # or activate your equivalent Python env
 ./scripts/provision_from_env.sh ~/nvflare_two_sites
 ```
 
+## Distribute The Startup Kits
+
+After provisioning, the generated participant directories live under:
+
+```bash
+~/nvflare_two_sites/workspace/${PROJECT_NAME}/prod_00/
+```
+
+At minimum, you need these directories:
+
+- `${SERVER_NAME}` on the machine that runs the server process
+- `${CLIENT_A_NAME}` on the host for client A
+- `${CLIENT_B_NAME}` on the host for client B
+- `${ADMIN_NAME}` on the machine that will run `fl_admin.sh` or submit `job.py --env prod`
+
+If the server host is also the admin host, the admin kit can stay in place there.
+
+Before starting anything, make sure each participant has the startup kit directory copied from the same provisioning run. Do not mix kits from different runs.
+
 ## Start Server And Clients
 
 Server process host:
@@ -132,6 +151,22 @@ python examples/hello_regression/job.py \
 
 That submits the same custom client and custom server code used in tutorial 1, but against real server and client processes.
 
+## What Success Looks Like
+
+If the run succeeds, `job.py` prints `Job status: FINISHED_COMPLETED`.
+
+The result bundle is downloaded under:
+
+```bash
+/path/to/copied/admin-kit/transfer/<job-id>/
+```
+
+The main output for this example is:
+
+```bash
+/path/to/copied/admin-kit/transfer/<job-id>/workspace/server_results/hello_regression_summary.json
+```
+
 The client and admin startup kits come from `~/nvflare_two_sites/workspace/${PROJECT_NAME}/prod_00/` on the server host after provisioning.
 
 If you keep the default template values, the admin name is `admin@demo.org`.
@@ -147,6 +182,7 @@ The startup kits themselves contain NVFlare certificates and private keys, so ha
 - using local machine plus port forwarding: `PUBLIC_FL_PORT` still points to the local server port instead of the public forwarded port
 - multiple NVFlare servers on one host: assign a different free local admin port or local FL port as needed before forwarding
 - one site uses older kits: mixed provisioning runs
+- job submission works locally but clients never join: startup kits were not copied to the intended hosts
 - `hello_regression` prod run fails before submission: `--startup_kit` points to the wrong directory
 
 ## Next Step
