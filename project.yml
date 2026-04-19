@@ -1,0 +1,64 @@
+api_version: 3
+name: nrec_server
+description: NVFlare project with MacBook as Server
+
+participants:
+  # 1. SERVER CONFIGURATION (MacBook)
+  - name: 158.39.75.142  # Server's internal name
+    type: server
+    org: my_org
+    fed_learn_port: 8002
+    admin_port: 8003
+    # CRITICAL: Use your public IPv4 address so clients know where to connect.
+    service_uri: grpc://158.39.75.142:8002  # Use your public IP
+
+  # 2. CLIENT CONFIGURATIONS (No client-side modification needed)
+  - name: cmiggw
+    type: client
+    org: ucsd_org
+  - name: snellius
+    type: client
+    org: surf_org
+  - name: hunt
+    type: client
+    org: hunt_org
+
+  # 3. Admin User
+  - name: zillur@biostat.com
+    type: admin
+    org: uio_org
+    role: project_admin
+
+builders:
+  - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
+    args:
+      template_file:
+        - master_template.yml
+  
+  - path: nvflare.lighter.impl.static_file.StaticFileBuilder
+    args:
+      config_folder: config
+      server_config:
+        snapshot_persistor:
+          path: nvflare.app_common.state_persistors.storage_state_persistor.StorageStatePersistor
+          args:
+            uri_root: "/"
+            storage:
+              path: nvflare.app_common.storages.filesystem_storage.FilesystemStorage
+              args:
+                # IMPORTANT: Replace with a writable directory on your Mac, e.g., /Users/zillurrahman/nvflare_storage/snapshot
+                root_dir: /home/ubuntu/nvflare/snapshot
+                uri_root: "/"
+
+        components:
+          - id: job_manager
+            path: nvflare.apis.impl.job_def_manager.SimpleJobDefManager
+            args:
+              # IMPORTANT: Replace with a writable directory on your Mac, e.g., /Users/zillurrahman/nvflare_storage/jobs
+              uri_root: /home/ubuntu/nvflare/storage
+              job_store_id: job_store
+
+  # CRITICAL: This generates the certificate for the public IP address.
+  - path: nvflare.lighter.impl.cert.CertBuilder 
+  
+  - path: nvflare.lighter.impl.signature.SignatureBuilder
