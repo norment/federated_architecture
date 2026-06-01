@@ -1,0 +1,60 @@
+api_version: 3
+name: nrec_server
+description: NVFlare project with regenie on Snellius (native) and TSD (wrapper)
+
+participants:
+  # 1. SERVER CONFIGURATION
+  - name: 158.39.75.142
+    type: server
+    org: my_org
+    fed_learn_port: 8002
+    admin_port: 8003
+    service_uri: grpc://158.39.75.142:8002
+
+  # 2. CLIENT CONFIGURATIONS
+  # snellius: native NVFlare client running directly on the cluster
+  - name: snellius
+    type: client
+    org: surf_org
+
+  # tsd: NVFlare client that runs outside TSD and submits jobs via the TSD HPC wrapper
+  - name: tsd
+    type: client
+    org: uio_org
+
+  # 3. Admin User
+  - name: zillur@biostat.com
+    type: admin
+    org: uio_org
+    role: project_admin
+
+builders:
+  - path: nvflare.lighter.impl.workspace.WorkspaceBuilder
+    args:
+      template_file:
+        - master_template.yml
+  
+  - path: nvflare.lighter.impl.static_file.StaticFileBuilder
+    args:
+      config_folder: config
+      server_config:
+        snapshot_persistor:
+          path: nvflare.app_common.state_persistors.storage_state_persistor.StorageStatePersistor
+          args:
+            uri_root: "/"
+            storage:
+              path: nvflare.app_common.storages.filesystem_storage.FilesystemStorage
+              args:
+                root_dir: /mnt/data/home/ubuntu/zillur/federated_trip/snapshot
+                uri_root: "/"
+
+        components:
+          - id: job_manager
+            path: nvflare.apis.impl.job_def_manager.SimpleJobDefManager
+            args:
+              uri_root: /mnt/data/home/ubuntu/zillur/federated_trip/storage
+              job_store_id: job_store
+
+  - path: nvflare.lighter.impl.cert.CertBuilder
+
+  - path: nvflare.lighter.impl.signature.SignatureBuilder

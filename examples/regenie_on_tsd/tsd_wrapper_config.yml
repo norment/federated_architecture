@@ -1,0 +1,28 @@
+PROJECT=p33
+USERNAME=mohammadzr
+username: p33-mohammadzr
+slurm_account: ${PROJECT}
+remote_prefix: regenie_on_tsd
+remote_python: python3
+poll_interval_seconds: 30
+# Regenie can take a while on large datasets; increase if needed
+timeout_minutes: 120
+min_valid_seconds: 300
+
+# If project is omitted, the wrapper derives it from the username prefix.
+# The standard paths below show the supported ${PROJECT} and ${USERNAME} substitution.
+import_dir: /tsd/${PROJECT}/data/durable/file-import/${PROJECT}-member-group
+export_dir: /tsd/${PROJECT}/data/durable/file-export
+work_dir: /cluster/project/p33/users/mohammadzr/flare/test1
+
+# Shell snippet injected into the generated Slurm job script BEFORE the regenie commands.
+# The generated script structure is:
+#   1. Slurm job specifications  →  submitted as JSON fields via the TSD HPC REST API
+#                                   (account, nodes, tasks, memory_per_cpu, time_limit)
+#   2. remote_setup             →  runs inside the Slurm script (environment activation)
+#   3. remote_command           →  runs inside the Slurm script (regenie execution)
+#
+# The flare conda environment (with regenie) must be unpacked once on TSD first:
+#   mkdir -p ~/flare-env && tar -xzf ~/flare-env.tar.gz -C ~/flare-env
+#   source ~/flare-env/bin/activate && conda-unpack
+remote_setup: "source /cluster/project/p33/users/mohammadzr/flare_regenie/bin/activate"
