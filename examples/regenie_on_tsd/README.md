@@ -53,6 +53,10 @@ bash start.sh
 ### Client: tsd
 
 ```bash
+python preauth_tsd.py
+export REGENIE_TSD_CONFIG=/home/zrahman/nvflare/tsd1/test2/tsd_wrapper_config.yml
+export PYTHONPATH=/home/zrahman/nvflare/tsd1/test2
+/home/zrahman/miniconda3/envs/flare/bin/tacl p33 --upload /tmp/test.sh --remote-path regenie_on_tsd/test-manual
 cd workspace/nrec_server/prod_00/tsd/startup
 bash start.sh
 ```
